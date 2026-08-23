@@ -1,8 +1,9 @@
 # © Mayanktaker Computers & Web Development | https://mayanktaker.com
-# .gitignore — Kilo Docker Sandbox
+# .gitignore — Mayanktaker Devbox
 
-# Environment secrets
+# Environment secrets & local wizard configs
 .env
+.devbox.conf
 
 # Backups (can be large)
 backups/
@@ -14,9 +15,7 @@ Thumbs.db
 # Logs
 *.log
 
-# Node modules (shouldn't be in workspace root, but just in case)
+# Node modules & Python caches
 node_modules/
-
-# Python caches
 __pycache__/
 *.pyc

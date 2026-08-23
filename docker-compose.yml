@@ -1,19 +1,26 @@
 # © Mayanktaker Computers & Web Development | https://mayanktaker.com
-# Ultimate AI Agent Sandbox Docker Compose (Ubuntu 26.04 LTS + Full Persistence + Healthchecks)
+# Ultimate AI Agent Sandbox Docker Compose (Ubuntu 26.04 LTS + Full Persistence + Healthchecks + Profiles)
 # Skeptic-audited August 2026 — all images verified latest stable
 # Hardware Profile: AMD Ryzen 5 5500 (10 Threads Allocated), 48GB Host RAM (25GB Allocated)
 
 services:
   # ── Primary Multi-Agent Sandbox Container ──
-  kilo-agent:
+  devbox:
     build:
       context: .
-      dockerfile: docker/Dockerfile.kilo
-    container_name: kilo-agent
-    hostname: kilo-agent
+      dockerfile: docker/Dockerfile.devbox
+      args:
+        INSTALL_AI_AGENTS: ${ENABLE_AI_AGENTS:-true}
+        INSTALL_FLUTTER_ANDROID: ${ENABLE_FLUTTER_ANDROID:-true}
+        INSTALL_PLAYWRIGHT: ${ENABLE_PLAYWRIGHT:-true}
+        INSTALL_PHP: ${ENABLE_PHP:-true}
+        INSTALL_DEV_TOOLS: ${ENABLE_DEV_TOOLS:-true}
+        INSTALL_FIREBASE: ${ENABLE_FIREBASE:-true}
+    container_name: devbox
+    hostname: devbox
     restart: unless-stopped
     ports:
-      - "${KILO_PORT:-8081}:8081"           # Kilo Server daemon
+      - "${AGENT_PORT:-8081}:8081"           # Agent Server daemon
       - "${VSCODE_PORT:-8085}:8085"         # VS Code Web (code-server)
       - "${GUI_NOVNC_PORT:-6080}:6080"      # noVNC Web Browser GUI Viewer
       - "${FIREBASE_UI_PORT:-4000}:4000"    # Firebase Emulator Suite UI
@@ -42,8 +49,8 @@ services:
     volumes:
       # 1. Project code workspace (Host folder mount)
       - ./workspace:/workspace:rw
-      # 2. Kilo Agent Configuration
-      - ./kilo_config:/home/agent/.kilo:rw
+      # 2. Agent Configuration
+      - ./devbox_config:/home/agent/.kilo:rw
       # 3. Persistent User Home Directory (bash history, git config, dotfiles)
       - agent_home:/home/agent:rw
       # 4. Persistent SSH Keys
@@ -70,19 +77,14 @@ services:
           cpus: '${CPU_LIMIT:-10}'         # Ryzen 5 5500 (10 threads)
           memory: ${MEMORY_LIMIT:-25G}     # 25GB RAM allocation
     networks:
-      - kilo-net
-    depends_on:
-      mysql-db:
-        condition: service_healthy
-      redis-cache:
-        condition: service_healthy
+      - devbox-net
     logging:
       driver: json-file
       options:
         max-size: "50m"
         max-file: "3"
 
-  # ── Redis 8 In-Memory Cache Service (upgraded from 7) ──
+  # ── Redis 8 In-Memory Cache Service ──
   redis-cache:
     image: redis:8-alpine
     container_name: redis-cache
@@ -98,7 +100,7 @@ services:
           cpus: '1'
           memory: 2G
     networks:
-      - kilo-net
+      - devbox-net
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 15s
@@ -121,12 +123,12 @@ services:
     environment:
       - REDIS_HOSTS=local:redis-cache:6379
     networks:
-      - kilo-net
+      - devbox-net
     depends_on:
       redis-cache:
         condition: service_healthy
 
-  # ── MySQL 8.4 LTS Database Container (latest LTS, verified Aug 2026) ──
+  # ── MySQL 8.4 LTS Database Container ──
   mysql-db:
     image: mysql:8.4
     container_name: mysql-db
@@ -144,7 +146,7 @@ services:
           cpus: '2'
           memory: 4G
     networks:
-      - kilo-net
+      - devbox-net
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-psecret"]
       interval: 15s
@@ -169,15 +171,15 @@ services:
       PMA_PORT: 3306
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret}
     networks:
-      - kilo-net
+      - devbox-net
     depends_on:
       mysql-db:
         condition: service_healthy
 
 networks:
-  kilo-net:
+  devbox-net:
     driver: bridge
-    name: kilo-net
+    name: devbox-net
 
 volumes:
   agent_home:

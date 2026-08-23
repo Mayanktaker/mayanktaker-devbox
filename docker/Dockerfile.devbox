@@ -1,12 +1,20 @@
 # © Mayanktaker Computers & Web Development | https://mayanktaker.com
 # Ultimate Multi-Agent Sandbox Dockerfile (Ubuntu 26.04 LTS "Resolute Raccoon")
-# Skeptic-audited: All versions verified August 2026
+# Skeptic-audited & Modular: Supports custom build args via setup wizard
 # Stack: Node 24 LTS, PHP 8.5, Python 3, Bun, Java 21, Flutter/Dart, Android SDK,
 #        Chromium, Playwright, Redis CLI, Prisma, Drizzle, Firebase CLI,
 #        Claude Code, Kilo, Codex, Cursor, Aider, Devin, Gemini CLI, Antigravity CLI,
 #        CommandCode, OpenChamber, Pi, Hermes, Paseo, Zcode, T3code, DeepSeek Harness
 
 FROM ubuntu:26.04 AS base
+
+# Modular Feature Build Arguments (default: true)
+ARG INSTALL_AI_AGENTS=true
+ARG INSTALL_FLUTTER_ANDROID=true
+ARG INSTALL_PLAYWRIGHT=true
+ARG INSTALL_PHP=true
+ARG INSTALL_DEV_TOOLS=true
+ARG INSTALL_FIREBASE=true
 
 # Prevent interactive prompts during installation
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -79,6 +87,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ninja-build \
     pkg-config \
     clang \
+    whiptail \
     && rm -rf /var/lib/apt/lists/*
 
 # ── Layer 2: GitHub CLI ──
@@ -94,23 +103,14 @@ RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg -
     apt-get update && apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-# ── Layer 4: PHP 8.5 (latest stable, released Nov 2025) + Composer + Extensions ──
-RUN add-apt-repository -y ppa:ondrej/php && \
-    apt-get update && apt-get install -y --no-install-recommends \
-    php8.5-cli \
-    php8.5-mysql \
-    php8.5-sqlite3 \
-    php8.5-redis \
-    php8.5-curl \
-    php8.5-mbstring \
-    php8.5-xml \
-    php8.5-zip \
-    php8.5-intl \
-    php8.5-gd \
-    php8.5-bcmath \
-    php8.5-xdebug \
-    composer \
-    && rm -rf /var/lib/apt/lists/*
+# ── Layer 4: PHP 8.5 (Conditional on INSTALL_PHP) ──
+RUN if [ "$INSTALL_PHP" = "true" ]; then \
+      add-apt-repository -y ppa:ondrej/php && \
+      apt-get update && apt-get install -y --no-install-recommends \
+      php8.5-cli php8.5-mysql php8.5-sqlite3 php8.5-redis php8.5-curl php8.5-mbstring \
+      php8.5-xml php8.5-zip php8.5-intl php8.5-gd php8.5-bcmath php8.5-xdebug composer && \
+      rm -rf /var/lib/apt/lists/* ; \
+    fi
 
 # ── Layer 5: code-server (VS Code Web), Bun, pnpm, yarn ──
 RUN curl -fsSL https://code-server.dev/install.sh | sh
@@ -119,68 +119,77 @@ RUN npm install -g pnpm yarn
 
 # ── Layer 6: uv (Python package manager), Aider & DeepSeek harness ──
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    pip3 install --no-cache-dir --break-system-packages aider-chat lm-eval transformers httpie ruff
+    pip3 install --no-cache-dir --break-system-packages httpie ruff && \
+    if [ "$INSTALL_AI_AGENTS" = "true" ]; then \
+      pip3 install --no-cache-dir --break-system-packages aider-chat lm-eval transformers ; \
+    fi
 
-# ── Layer 7: Flutter SDK + Dart (stable channel) ──
-RUN git clone https://github.com/flutter/flutter.git -b stable --depth 1 /opt/flutter && \
-    /opt/flutter/bin/flutter --disable-analytics && \
-    /opt/flutter/bin/flutter config --no-analytics && \
-    /opt/flutter/bin/dart --disable-analytics && \
-    /opt/flutter/bin/flutter precache --android --web
+# ── Layer 7: Flutter SDK + Dart (Conditional on INSTALL_FLUTTER_ANDROID) ──
+RUN if [ "$INSTALL_FLUTTER_ANDROID" = "true" ]; then \
+      git clone https://github.com/flutter/flutter.git -b stable --depth 1 /opt/flutter && \
+      /opt/flutter/bin/flutter --disable-analytics && \
+      /opt/flutter/bin/flutter config --no-analytics && \
+      /opt/flutter/bin/dart --disable-analytics && \
+      /opt/flutter/bin/flutter precache --android --web ; \
+    else \
+      mkdir -p /opt/flutter ; \
+    fi
 
-# ── Layer 8: Android SDK command-line tools + platform-tools ──
-RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
-    curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/cmdline-tools.zip && \
-    unzip -q /tmp/cmdline-tools.zip -d ${ANDROID_HOME}/cmdline-tools && \
-    mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest && \
-    rm /tmp/cmdline-tools.zip && \
-    yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 && \
-    ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;35.0.0" "platforms;android-35" && \
-    /opt/flutter/bin/flutter config --android-sdk ${ANDROID_HOME} && \
-    chmod -R 755 ${ANDROID_HOME}
+# ── Layer 8: Android SDK command-line tools (Conditional on INSTALL_FLUTTER_ANDROID) ──
+RUN if [ "$INSTALL_FLUTTER_ANDROID" = "true" ]; then \
+      mkdir -p ${ANDROID_HOME}/cmdline-tools && \
+      curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/cmdline-tools.zip && \
+      unzip -q /tmp/cmdline-tools.zip -d ${ANDROID_HOME}/cmdline-tools && \
+      mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest && \
+      rm /tmp/cmdline-tools.zip && \
+      yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 && \
+      ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;35.0.0" "platforms;android-35" && \
+      /opt/flutter/bin/flutter config --android-sdk ${ANDROID_HOME} && \
+      chmod -R 755 ${ANDROID_HOME} ; \
+    else \
+      mkdir -p ${ANDROID_HOME} ; \
+    fi
 
-# ── Layer 9: Playwright + Chromium browsers ──
-RUN npx playwright install --with-deps chromium || true
+# ── Layer 9: Playwright + Chromium browsers (Conditional on INSTALL_PLAYWRIGHT) ──
+RUN if [ "$INSTALL_PLAYWRIGHT" = "true" ]; then \
+      npx playwright install --with-deps chromium || true ; \
+    fi
 
-# ── Layer 10: lazygit + lazydocker TUI tools ──
-RUN curl -fsSL https://raw.githubusercontent.com/jesseduffield/lazygit/master/scripts/install_update_linux.sh | bash && \
-    curl -fsSL https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | bash
+# ── Layer 10: lazygit + lazydocker TUI tools (Conditional on INSTALL_DEV_TOOLS) ──
+RUN if [ "$INSTALL_DEV_TOOLS" = "true" ]; then \
+      curl -fsSL https://raw.githubusercontent.com/jesseduffield/lazygit/master/scripts/install_update_linux.sh | bash && \
+      curl -fsSL https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | bash ; \
+    fi
 
 # ── Layer 11: AI Multi-Agent CLI Tools, ORMs & Firebase (npm global) ──
-RUN npm install -g --allow-scripts \
-    prisma \
-    drizzle-kit \
-    firebase-tools \
-    @anthropic-ai/claude-code \
-    @kilocode/cli \
-    @commandcode/cli \
-    openchamber-cli \
-    pi-agent \
-    hermes-agent \
-    @openai/codex \
-    @cursor/cli \
-    paseo-cli \
-    zcode \
-    t3code \
-    @google/gemini-cli \
-    tsx \
-    nodemon \
-    pm2 \
-    || true
+RUN if [ "$INSTALL_AI_AGENTS" = "true" ]; then \
+      npm install -g --allow-scripts \
+      prisma drizzle-kit \
+      @anthropic-ai/claude-code @kilocode/cli @commandcode/cli openchamber-cli \
+      pi-agent hermes-agent @openai/codex @cursor/cli paseo-cli zcode t3code \
+      @google/gemini-cli tsx nodemon pm2 || true ; \
+    fi && \
+    if [ "$INSTALL_FIREBASE" = "true" ]; then \
+      npm install -g firebase-tools || true ; \
+    fi
 
-# ── Layer 12: Devin CLI (via pip, official method) ──
-RUN pip3 install --no-cache-dir --break-system-packages devin-cli || true
+# ── Layer 12: Devin CLI (pip, conditional on INSTALL_AI_AGENTS) ──
+RUN if [ "$INSTALL_AI_AGENTS" = "true" ]; then \
+      pip3 install --no-cache-dir --break-system-packages devin-cli || true ; \
+    fi
 
-# ── Layer 13: Antigravity CLI (official install script) ──
-RUN curl -fsSL https://antigravity.google/cli/install.sh | bash || true
+# ── Layer 13: Antigravity CLI (official install script, conditional on INSTALL_AI_AGENTS) ──
+RUN if [ "$INSTALL_AI_AGENTS" = "true" ]; then \
+      curl -fsSL https://antigravity.google/cli/install.sh | bash || true ; \
+    fi
 
-# ── Layer 14: bat/fd symlinks (Ubuntu names them batcat/fdfind) ──
+# ── Layer 14: bat/fd symlinks ──
 RUN mkdir -p /usr/local/bin && \
     ln -sf /usr/bin/batcat /usr/local/bin/bat 2>/dev/null || true && \
     ln -sf /usr/bin/fdfind /usr/local/bin/fd 2>/dev/null || true
 
 # ── Layer 15: Auto-updater script ──
-RUN echo '#!/usr/bin/env bash\necho "[+] Updating all AI CLI tools, ORMs, Flutter & system packages..."\nnpm update -g\npip3 install --upgrade aider-chat lm-eval devin-cli httpie ruff --break-system-packages\n/opt/flutter/bin/flutter upgrade\necho "[✓] All tools updated!"' > /usr/local/bin/update-tools && \
+RUN echo '#!/usr/bin/env bash\necho "[+] Updating installed CLI tools, Flutter & packages..."\nnpm update -g\npip3 install --upgrade httpie ruff --break-system-packages\nif [ -d "/opt/flutter/.git" ]; then /opt/flutter/bin/flutter upgrade; fi\necho "[✓] All tools updated!"' > /usr/local/bin/update-tools && \
     chmod +x /usr/local/bin/update-tools
 
 # ── Layer 16: Create non-root developer user 'agent' with passwordless sudo ──

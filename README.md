@@ -1,6 +1,6 @@
-# 🟢 Ultimate AI Multi-Agent Docker Sandbox
+# 🟢 Mayanktaker Devbox
 
-> **Skeptic-audited, production-grade Docker sandbox** for running 20+ AI coding agents, full-stack development tools, and mobile development (Flutter/Android) — all safely isolated from your host machine.
+> **Skeptic-audited, production-grade Docker sandbox** for running 20+ AI coding agents, full-stack development tools, and mobile development (Flutter/Android) — all safely isolated from your host machine. Includes an **Interactive Setup Wizard** to enable or disable any component on demand!
 
 **© [Mayanktaker Computers & Web Development](https://mayanktaker.com)**
 
@@ -12,9 +12,27 @@ After a [real incident on r/kilocode](https://www.reddit.com/r/kilocode/) where 
 
 - **Isolate AI agents** in a Docker container so they **cannot touch your host OS**
 - **Persist all your work** (code, extensions, SSH keys, DB data) across container restarts
-- **Bundle 20+ AI coding CLIs** with VS Code, databases, and web dashboards — ready to go
+- **Customize with ease**: Run `./manage.sh wizard` anytime to install everything or toggle only the modules you need!
 
 If an AI goes rogue inside this sandbox, you just `./manage.sh down && ./manage.sh up`. Your host machine stays completely safe.
+
+---
+
+## 🧙‍♂️ Interactive Setup Wizard
+
+Run `./manage.sh wizard` anytime to choose what to install/enable:
+
+- **🚀 Install All (Full Supercharged Suite)** — Enable everything in one click!
+- **🎛️ Custom Selection** — Interactively toggle:
+  - [x] **AI Agent CLIs** (Claude, Kilo, Gemini, Antigravity, Devin, Aider, etc.)
+  - [x] **Mobile Development** (Flutter SDK, Dart, Android SDK API 35)
+  - [x] **Browser Testing & Automation** (Chromium, Playwright)
+  - [x] **PHP 8.5 & Composer Ecosystem**
+  - [x] **MySQL 8.4 Database Container + phpMyAdmin**
+  - [x] **Redis 8 Cache Container + Redis Commander**
+  - [x] **Firebase CLI & Local Emulator Suite**
+  - [x] **Developer Productivity TUI Tools** (lazygit, lazydocker, bat, eza, fd, ripgrep)
+- **⚡ Minimal Suite** — Ultra lightweight (VS Code Web + Node 24 + SQLite)
 
 ---
 
@@ -22,20 +40,16 @@ If an AI goes rogue inside this sandbox, you just `./manage.sh down && ./manage.
 
 ```bash
 # 1. Clone and enter the project
-git clone https://github.com/Mayanktaker/kilo-docker-sandbox.git
-cd kilo-docker-sandbox
+git clone https://github.com/Mayanktaker/mayanktaker-devbox.git
+cd mayanktaker-devbox
 
-# 2. Copy environment template and add your API keys
-cp .env.example .env
-nano .env  # Add your OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, etc.
+# 2. Run the Interactive Setup Wizard to select components
+./manage.sh wizard
 
-# 3. Build the sandbox image (~15 min first time)
-./manage.sh build
-
-# 4. Start all services
+# 3. Start Devbox web services
 ./manage.sh up
 
-# 5. Open VS Code in your browser
+# 4. Access VS Code in your browser
 # → http://localhost:8085
 ```
 
@@ -47,13 +61,13 @@ nano .env  # Add your OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, etc.
 | :--- | :--- | :--- |
 | **CPU** | 4 cores | 10 threads (Ryzen 5 5500) |
 | **RAM** | 16GB host | 25GB allocated (48GB host) |
-| **Disk** | 20GB free | ~12-15GB image size |
+| **Disk** | 20GB free | ~12-15GB image size (full mode) |
 | **Docker** | v24+ | Docker Compose v2+ |
 | **GPU** | Not required | RX 570 4GB (optional, for local LLMs) |
 
 ---
 
-## 🧰 What's Inside
+## 🧰 What's Included
 
 ### Base OS & Runtimes
 
@@ -115,27 +129,6 @@ nano .env  # Add your OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, etc.
 | **Playwright** | Browser automation framework (Chromium pre-installed) |
 | **Xvfb + x11vnc** | Virtual X11 display for GUI apps |
 
-### 🛠️ Developer Productivity Tools
-
-| Tool | Replaces | Purpose |
-| :--- | :--- | :--- |
-| **lazygit** | `git` | Beautiful TUI for Git |
-| **lazydocker** | `docker` | TUI for Docker management |
-| **bat** | `cat` | Syntax-highlighted file viewer |
-| **eza** | `ls` | Modern ls with icons & Git status |
-| **fd** | `find` | Fast file finder |
-| **ripgrep** | `grep` | Fast recursive code search |
-| **fzf** | `Ctrl+R` | Fuzzy finder |
-| **zoxide** | `cd` | Smart directory jumping |
-| **tmux** | — | Terminal multiplexer |
-| **htop** | `top` | System resource monitor |
-| **HTTPie** | `curl` | User-friendly HTTP client |
-| **Ruff** | `flake8+black` | Fast Python linter/formatter |
-
-### 📦 Package Managers & Build Tools
-
-`npm` · `pnpm` · `yarn` · `bun` · `Composer` · `pip` · `uv` · `Prisma` · `Drizzle-kit` · `tsx` · `nodemon` · `pm2` · `Firebase CLI` · `gh` (GitHub CLI)
-
 ---
 
 ## 🔒 Persistence — Your Data Survives Container Restarts
@@ -160,12 +153,13 @@ nano .env  # Add your OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, etc.
 ## 📋 All Commands
 
 ```bash
-./manage.sh build          # Build the Docker image
-./manage.sh up             # Start all services
+./manage.sh wizard         # Run Interactive Customization Wizard
+./manage.sh build          # Build the Docker image with current settings
+./manage.sh up             # Start all enabled services
 ./manage.sh down           # Stop all services (data persisted)
-./manage.sh restart        # Restart all services
+./manage.sh restart        # Restart all services gracefully
 ./manage.sh shell          # Enter container terminal
-./manage.sh update         # Update all AI tools, Flutter, packages
+./manage.sh update         # Update all AI tools, Flutter, npm & pip packages
 ./manage.sh code           # Show VS Code Web URL
 ./manage.sh gui            # Show noVNC GUI URL
 ./manage.sh pma            # Show phpMyAdmin URL
@@ -176,7 +170,7 @@ nano .env  # Add your OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, etc.
 ./manage.sh backup         # Database dump to ./backups/
 ./manage.sh auto-backup    # Setup daily 2:00 AM cron backup
 ./manage.sh health         # Check service healthchecks
-./manage.sh clean          # Prune Docker caches
+./manage.sh clean          # Prune Docker build caches
 ./manage.sh status         # Container status + resource usage
 ./manage.sh logs           # Tail container logs
 ./manage.sh flutter-doctor # Run Flutter diagnostics
@@ -202,73 +196,13 @@ cp .env.example .env
 
 ---
 
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────┐
-│                YOUR HOST MACHINE                │
-│        (Completely isolated from sandbox)        │
-├─────────────────────────────────────────────────┤
-│  Docker Engine                                   │
-│  ┌─────────────────────────────────────────────┐│
-│  │  kilo-agent (Ubuntu 26.04 LTS)              ││
-│  │  ├── 20+ AI Coding Agents                   ││
-│  │  ├── VS Code Web (code-server)              ││
-│  │  ├── Flutter + Android SDK                   ││
-│  │  ├── Chromium + Playwright                   ││
-│  │  ├── Node 24, PHP 8.5, Python 3, Bun        ││
-│  │  └── noVNC GUI Display                       ││
-│  ├─────────────────────────────────────────────┤│
-│  │  mysql-db (MySQL 8.4 LTS)                   ││
-│  │  redis-cache (Redis 8 Alpine)               ││
-│  │  phpmyadmin (Web GUI)                        ││
-│  │  redis-commander (Web GUI)                   ││
-│  └─────────────────────────────────────────────┘│
-│  Network: kilo-net (bridge)                      │
-│  Volumes: 12 persistent volumes                  │
-└─────────────────────────────────────────────────┘
-```
-
----
-
-## 📊 Disk Space Breakdown
-
-| Component | Size |
-| :--- | :--- |
-| Ubuntu 26.04 base + system packages | ~800MB |
-| Node.js 24 + npm global packages (20+ AI CLIs) | ~1.5GB |
-| PHP 8.5 + Composer + extensions | ~200MB |
-| Flutter SDK + Dart | ~2GB |
-| Android SDK (cmdline-tools + platform-tools + API 35) | ~2GB |
-| Chromium + Playwright browsers | ~500MB |
-| Python packages (Aider, Devin, etc.) | ~500MB |
-| code-server (VS Code Web) | ~300MB |
-| MySQL 8.4 container | ~500MB |
-| Redis 8 Alpine container | ~15MB |
-| **Total** | **~8-10GB (Cloud API mode)** |
-
----
-
 ## 🛡️ Security Features
 
 - **Non-root user**: Container runs as `agent` (UID 1000), not root
 - **no-new-privileges**: Prevents privilege escalation attacks
 - **Healthchecks**: MySQL, Redis, and code-server monitored automatically
 - **Log rotation**: JSON file logging with 50MB rotation (prevents disk fill)
-- **Network isolation**: All services communicate on private `kilo-net` bridge
 - **Host isolation**: If an AI agent runs `rm -rf /`, only the container is affected
-
----
-
-## 🔄 Updating Everything
-
-```bash
-# Update all AI tools, Flutter, npm packages, pip packages:
-./manage.sh update
-
-# Or rebuild the entire image with latest versions:
-./manage.sh build
-```
 
 ---
 

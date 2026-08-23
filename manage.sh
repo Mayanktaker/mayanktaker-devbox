@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # © Mayanktaker Computers & Web Development | https://mayanktaker.com
-# Ultimate Management Script for Multi-Agent Docker Sandbox (Ubuntu 26.04 LTS)
+# Ultimate Management Script for Mayanktaker Devbox (Ubuntu 26.04 LTS)
 # Skeptic-audited August 2026
 
 set -e
@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 # Print header banner
 show_banner() {
     echo -e "${CYAN}====================================================${NC}"
-    echo -e "${GREEN}  🟢 Ultimate Multi-Agent Sandbox (Ubuntu 26.04 LTS) ${NC}"
+    echo -e "${GREEN}  🟢 Mayanktaker Devbox (Ubuntu 26.04 LTS)          ${NC}"
     echo -e "${CYAN}  © Mayanktaker Computers & Web Development         ${NC}"
     echo -e "${CYAN}====================================================${NC}"
 }
@@ -30,30 +30,33 @@ check_env() {
 
 # Main command router
 case "$1" in
+    wizard|setup|config)
+        bash ./wizard.sh
+        ;;
     build)
         show_banner
         check_env
-        echo -e "${GREEN}[+] Building Multi-Agent Sandbox Docker image (Ubuntu 26.04)...${NC}"
-        docker compose build kilo-agent
+        echo -e "${GREEN}[+] Building Devbox Docker image (Ubuntu 26.04)...${NC}"
+        docker compose build devbox
         ;;
     up)
         show_banner
         check_env
-        echo -e "${GREEN}[+] Starting Sandbox services (25GB RAM, 10 CPUs)...${NC}"
+        echo -e "${GREEN}[+] Starting Devbox services (25GB RAM, 10 CPUs)...${NC}"
         docker compose up -d
-        echo -e "${GREEN}[✓] All Sandbox Web Services Running!${NC}"
+        echo -e "${GREEN}[✓] All Devbox Web Services Running!${NC}"
         echo -e "${CYAN}    - VS Code Web     : http://localhost:8085${NC}"
         echo -e "${CYAN}    - noVNC GUI Web   : http://localhost:6080${NC}"
         echo -e "${CYAN}    - phpMyAdmin      : http://localhost:8086${NC}"
         echo -e "${CYAN}    - Redis Commander : http://localhost:8087${NC}"
         echo -e "${CYAN}    - Firebase UI     : http://localhost:4000${NC}"
-        echo -e "${CYAN}    - Kilo Server     : http://localhost:8081${NC}"
+        echo -e "${CYAN}    - Agent Server    : http://localhost:8081${NC}"
         echo -e "${CYAN}    - MySQL DB        : localhost:3306${NC}"
         echo -e "${CYAN}    - Redis Cache     : localhost:6379${NC}"
         ;;
     down)
         show_banner
-        echo -e "${YELLOW}[-] Stopping Sandbox containers...${NC}"
+        echo -e "${YELLOW}[-] Stopping Devbox containers...${NC}"
         docker compose down
         echo -e "${GREEN}[✓] Stopped. All settings, extensions & DB data remain persisted.${NC}"
         ;;
@@ -66,13 +69,13 @@ case "$1" in
         ;;
     shell)
         show_banner
-        echo -e "${GREEN}[+] Opening interactive shell inside sandbox...${NC}"
-        docker compose exec kilo-agent bash
+        echo -e "${GREEN}[+] Opening interactive shell inside Devbox...${NC}"
+        docker compose exec devbox bash
         ;;
     update)
         show_banner
         echo -e "${GREEN}[+] Updating all AI CLI tools, Flutter, npm packages...${NC}"
-        docker compose exec kilo-agent sudo /usr/local/bin/update-tools
+        docker compose exec devbox sudo /usr/local/bin/update-tools
         echo -e "${GREEN}[✓] All tools updated!${NC}"
         ;;
     code)
@@ -108,7 +111,7 @@ case "$1" in
     redis)
         show_banner
         echo -e "${GREEN}[+] Connecting to Redis Cache CLI...${NC}"
-        docker compose exec kilo-agent redis-cli -h redis-cache
+        docker compose exec devbox redis-cli -h redis-cache
         ;;
     backup)
         show_banner
@@ -131,7 +134,7 @@ case "$1" in
         docker compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
         echo ""
         echo -e "${CYAN}[i] Individual service health:${NC}"
-        for svc in kilo-agent mysql-db redis-cache; do
+        for svc in devbox mysql-db redis-cache; do
             STATUS=$(docker inspect --format='{{.State.Health.Status}}' $svc 2>/dev/null || echo "no healthcheck")
             echo -e "    ${svc}: ${STATUS}"
         done
@@ -157,17 +160,18 @@ case "$1" in
         ;;
     flutter-doctor)
         show_banner
-        echo -e "${GREEN}[+] Running Flutter doctor inside sandbox...${NC}"
-        docker compose exec kilo-agent /opt/flutter/bin/flutter doctor -v
+        echo -e "${GREEN}[+] Running Flutter doctor inside Devbox...${NC}"
+        docker compose exec devbox /opt/flutter/bin/flutter doctor -v
         ;;
     *)
         show_banner
         echo -e "${YELLOW}Usage: ./manage.sh [command]${NC}"
         echo ""
         echo "Commands:"
-        echo "  build          Build the Multi-Agent Sandbox Docker image"
-        echo "  up             Start all sandbox services"
-        echo "  down           Stop sandbox services (data persisted)"
+        echo "  wizard / setup Run Interactive Customization Wizard"
+        echo "  build          Build the Devbox Docker image"
+        echo "  up             Start all enabled Devbox services"
+        echo "  down           Stop Devbox services (data persisted)"
         echo "  restart        Restart all services gracefully"
         echo "  shell          Launch interactive terminal inside container"
         echo "  update         Update all AI CLI tools, Flutter, npm & pip packages"
