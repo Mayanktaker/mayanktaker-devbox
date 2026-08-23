@@ -4,7 +4,7 @@
 # Runtimes: Node, PHP, Java, Rust, Go, Bun, UV, Composer, Deno, C/C++ Toolchain, Kotlin
 # Mobile Dev: Flutter/Android, React Native Expo CLI, Fastlane, Watchman, Android NDK
 # Shells: Bash, Zsh (+ Oh My Zsh/Starship), Fish
-# Editors: VS Code Web, Neovim/Vim, Micro, Helix
+# Editors: VS Code Web (code-server), VSCodium Web (openvscode-server Telemetry-Free), Neovim/Vim, Micro, Helix
 # Web Tools: AI Agents, Playwright, Lighthouse, Web Scaffolding CLIs (Next, Astro, Vite, Tailwind)
 
 FROM ubuntu:26.04 AS base
@@ -33,6 +33,8 @@ ARG INSTALL_DENO=false
 ARG INSTALL_CPP_TOOLCHAIN=false
 ARG INSTALL_ZSH=true
 ARG INSTALL_FISH=false
+ARG INSTALL_VSCODE_WEB=true
+ARG INSTALL_VSCODIUM_WEB=true
 ARG INSTALL_NEOVIM=true
 ARG INSTALL_MICRO=true
 ARG INSTALL_HELIX=false
@@ -47,7 +49,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     FLUTTER_HOME=/opt/flutter \
     CHROME_BIN=/usr/bin/chromium-browser \
     PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers \
-    PATH="/home/agent/.cargo/bin:/home/agent/.deno/bin:/usr/local/go/bin:/home/agent/.local/bin:/home/agent/.bun/bin:/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:${PATH}"
+    PATH="/opt/openvscode-server/bin:/home/agent/.cargo/bin:/home/agent/.deno/bin:/usr/local/go/bin:/home/agent/.local/bin:/home/agent/.bun/bin:/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:${PATH}"
 
 # ── Layer 1: Core Ubuntu system packages, build tools & Java ──
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -184,8 +186,14 @@ RUN if [ "$INSTALL_PHP" = "true" ]; then \
       rm -rf /var/lib/apt/lists/* ; \
     fi
 
-# ── Layer 10: code-server (VS Code Web), Bun, pnpm, yarn, Deno ──
-RUN curl -fsSL https://code-server.dev/install.sh | sh
+# ── Layer 10: VS Code Web (code-server) & VSCodium Web (openvscode-server), Bun, pnpm, yarn, Deno ──
+RUN if [ "$INSTALL_VSCODE_WEB" = "true" ]; then \
+      curl -fsSL https://code-server.dev/install.sh | sh ; \
+    fi && \
+    if [ "$INSTALL_VSCODIUM_WEB" = "true" ]; then \
+      mkdir -p /opt/openvscode-server && \
+      curl -fsSL https://github.com/gitpod-io/openvscode-server/releases/download/openvscode-server-v1.96.0/openvscode-server-v1.96.0-linux-x64.tar.gz | tar -C /opt/openvscode-server --strip-components=1 -xz || true ; \
+    fi
 RUN npm install -g pnpm yarn
 RUN if [ "$INSTALL_BUN" = "true" ]; then curl -fsSL https://bun.sh/install | bash ; fi
 RUN if [ "$INSTALL_DENO" = "true" ]; then curl -fsSL https://deno.land/install.sh | sh ; fi
@@ -290,10 +298,10 @@ RUN echo '#!/usr/bin/env bash\necho "[+] Updating installed CLI tools, Flutter &
 RUN useradd -m -u 1000 -s /bin/bash agent && \
     echo "agent ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
     mkdir -p /workspace /home/agent/.kilo /home/agent/.ssh /home/agent/.cache/composer \
-             /home/agent/.config/code-server /home/agent/.config/configstore \
-             /home/agent/.local/share/code-server /home/agent/.android /home/agent/.cargo && \
+             /home/agent/.config/code-server /home/agent/.config/openvscode-server /home/agent/.config/configstore \
+             /home/agent/.local/share/code-server /home/agent/.local/share/openvscode-server /home/agent/.android /home/agent/.cargo && \
     echo 'alias fb="firebase"\nalias c="claude"\nalias k="kilo"\nalias a="aider"\nalias db="mysql -u root -psecret -h mysql-db sandbox_db"\nalias pg="psql -h postgres-db -U postgres sandbox_db"\nalias r="redis-cli -h redis-cache"\nalias gs="git status"\nalias lg="lazygit"\nalias ld="lazydocker"\nalias cat="bat --paging=never"\nalias ls="eza --icons --group-directories-first"\nalias find="fd"\nalias flutter="/opt/flutter/bin/flutter"\nalias dart="/opt/flutter/bin/dart"' >> /home/agent/.bashrc && \
-    chown -R agent:agent /workspace /home/agent /opt/flutter /opt/android-sdk
+    chown -R agent:agent /workspace /home/agent /opt/flutter /opt/android-sdk /opt/openvscode-server 2>/dev/null || true
 
 # Switch to non-root user
 USER agent
@@ -301,12 +309,12 @@ USER agent
 # Set working directory to mounted workspace
 WORKDIR /workspace
 
-# Expose: Kilo(8081), VS Code(8085), noVNC(6080), Firebase Emulators(4000,9099,8082,9000,5001,5000)
-EXPOSE 8081 8085 6080 4000 9099 8082 9000 5001 5000
+# Expose: VSCodium Web(8084), Kilo(8081), VS Code(8085), noVNC(6080), Firebase Emulators(4000,9099,8082,9000,5001,5000)
+EXPOSE 8084 8081 8085 6080 4000 9099 8082 9000 5001 5000
 
-# Healthcheck: verify code-server is responding
+# Healthcheck: verify web IDE is responding
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8085/healthz || exit 1
+    CMD curl -f http://localhost:8085/healthz || curl -f http://localhost:8084/healthz || exit 1
 
-# Default entrypoint: Start X11, noVNC, code-server & Kilo daemon
-CMD ["sh", "-c", "Xvfb :99 -screen 0 1920x1080x24 >/dev/null 2>&1 & x11vnc -display :99 -forever -shared -nopw -rfbport 5900 >/dev/null 2>&1 & websockify --web /usr/share/novnc 6080 localhost:5900 >/dev/null 2>&1 & code-server --bind-addr 0.0.0.0:8085 --auth none /workspace & kilo serve --host 0.0.0.0 --port 8081"]
+# Default entrypoint: Start X11, noVNC, code-server / openvscode-server & Kilo daemon
+CMD ["sh", "-c", "Xvfb :99 -screen 0 1920x1080x24 >/dev/null 2>&1 & x11vnc -display :99 -forever -shared -nopw -rfbport 5900 >/dev/null 2>&1 & websockify --web /usr/share/novnc 6080 localhost:5900 >/dev/null 2>&1 & (if command -v code-server >/dev/null 2>&1; then code-server --bind-addr 0.0.0.0:8085 --auth none /workspace & fi) & (if [ -f /opt/openvscode-server/bin/openvscode-server ]; then /opt/openvscode-server/bin/openvscode-server --host 0.0.0.0 --port 8084 --without-connection-token /workspace & fi) & kilo serve --host 0.0.0.0 --port 8081"]

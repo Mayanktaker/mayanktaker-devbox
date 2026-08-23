@@ -51,6 +51,8 @@ load_config() {
     ENABLE_CPP_TOOLCHAIN=${ENABLE_CPP_TOOLCHAIN:-false}
     ENABLE_ZSH=${ENABLE_ZSH:-true}
     ENABLE_FISH=${ENABLE_FISH:-false}
+    ENABLE_VSCODE_WEB=${ENABLE_VSCODE_WEB:-true}
+    ENABLE_VSCODIUM_WEB=${ENABLE_VSCODIUM_WEB:-true}
     ENABLE_NEOVIM=${ENABLE_NEOVIM:-true}
     ENABLE_MICRO=${ENABLE_MICRO:-true}
     ENABLE_HELIX=${ENABLE_HELIX:-false}
@@ -111,6 +113,8 @@ ENABLE_DENO=$ENABLE_DENO
 ENABLE_CPP_TOOLCHAIN=$ENABLE_CPP_TOOLCHAIN
 ENABLE_ZSH=$ENABLE_ZSH
 ENABLE_FISH=$ENABLE_FISH
+ENABLE_VSCODE_WEB=$ENABLE_VSCODE_WEB
+ENABLE_VSCODIUM_WEB=$ENABLE_VSCODIUM_WEB
 ENABLE_NEOVIM=$ENABLE_NEOVIM
 ENABLE_MICRO=$ENABLE_MICRO
 ENABLE_HELIX=$ENABLE_HELIX
@@ -148,6 +152,8 @@ EOF
     set_env_var "ENABLE_CPP_TOOLCHAIN" "$ENABLE_CPP_TOOLCHAIN"
     set_env_var "ENABLE_ZSH" "$ENABLE_ZSH"
     set_env_var "ENABLE_FISH" "$ENABLE_FISH"
+    set_env_var "ENABLE_VSCODE_WEB" "$ENABLE_VSCODE_WEB"
+    set_env_var "ENABLE_VSCODIUM_WEB" "$ENABLE_VSCODIUM_WEB"
     set_env_var "ENABLE_NEOVIM" "$ENABLE_NEOVIM"
     set_env_var "ENABLE_MICRO" "$ENABLE_MICRO"
     set_env_var "ENABLE_HELIX" "$ENABLE_HELIX"
@@ -220,10 +226,22 @@ select_db_engines() {
 # Shells & Editors Customizer
 select_shells_editors() {
     show_banner
-    echo -e "${BOLD}💻 Shells & Terminal Text Editors Selection${NC}"
+    echo -e "${BOLD}💻 Shells & Web / Terminal Editors Selection${NC}"
     echo ""
 
-    echo -e "${BOLD}1. Command Shells:${NC}"
+    echo -e "${BOLD}1. Web IDE Choice (Port 8085 / 8084):${NC}"
+    echo -e "   [1] 💙 Install BOTH VS Code Web (MS) & VSCodium Web (Open-VSX Telemetry-Free) (${GREEN}Recommended Default${NC})"
+    echo -e "   [2] 🔷 VS Code Web only (code-server - Port 8085)"
+    echo -e "   [3] 🛡️ VSCodium Web only (open-vsx Telemetry-Free - Port 8084)"
+    read -p "Select Web IDE option [1-3, Enter=1]: " ide_choice
+    case "$ide_choice" in
+        2) ENABLE_VSCODE_WEB=true; ENABLE_VSCODIUM_WEB=false ;;
+        3) ENABLE_VSCODE_WEB=false; ENABLE_VSCODIUM_WEB=true ;;
+        *) ENABLE_VSCODE_WEB=true; ENABLE_VSCODIUM_WEB=true ;;
+    esac
+
+    echo ""
+    echo -e "${BOLD}2. Command Shells:${NC}"
     read -p "Install Zsh + Starship prompt? (Y/n): " zsh_c
     case "$zsh_c" in [nN]*) ENABLE_ZSH=false ;; *) ENABLE_ZSH=true ;; esac
 
@@ -231,7 +249,7 @@ select_shells_editors() {
     case "$fish_c" in [yY]*) ENABLE_FISH=true ;; *) ENABLE_FISH=false ;; esac
 
     echo ""
-    echo -e "${BOLD}2. Terminal Text Editors & IDEs:${NC}"
+    echo -e "${BOLD}3. Terminal Text Editors:${NC}"
     read -p "Install Neovim + Vim? (Y/n): " nvim_c
     case "$nvim_c" in [nN]*) ENABLE_NEOVIM=false ;; *) ENABLE_NEOVIM=true ;; esac
 
@@ -387,6 +405,8 @@ show_summary() {
     }
 
     print_row "🤖 20+ AI Agent CLIs (Claude, Kilo, etc)" "$ENABLE_AI_AGENTS"
+    print_row "🔷 VS Code Web (code-server - MS)" "$ENABLE_VSCODE_WEB"
+    print_row "🛡️ VSCodium Web (open-vsx Telemetry-Free)" "$ENABLE_VSCODIUM_WEB"
     print_row "📱 Mobile Dev (Flutter + Android SDK)" "$ENABLE_FLUTTER_ANDROID"
     print_row "⚛️ React Native Expo CLI & eas-cli" "$ENABLE_EXPO"
     print_row "🚀 Fastlane Mobile Release Automation" "$ENABLE_FASTLANE"
@@ -455,6 +475,8 @@ install_all() {
     ENABLE_CPP_TOOLCHAIN=true
     ENABLE_ZSH=true
     ENABLE_FISH=true
+    ENABLE_VSCODE_WEB=true
+    ENABLE_VSCODIUM_WEB=true
     ENABLE_NEOVIM=true
     ENABLE_MICRO=true
     ENABLE_HELIX=true
@@ -496,6 +518,8 @@ install_minimal() {
     ENABLE_CPP_TOOLCHAIN=false
     ENABLE_ZSH=true
     ENABLE_FISH=false
+    ENABLE_VSCODE_WEB=true
+    ENABLE_VSCODIUM_WEB=true
     ENABLE_NEOVIM=true
     ENABLE_MICRO=true
     ENABLE_HELIX=false
@@ -508,7 +532,7 @@ install_minimal() {
     PHP_VERSION="8.5"
     JAVA_VERSION="21"
     save_config
-    echo -e "${YELLOW}[⚡] MINIMAL CORE SUITE ENABLED! (AI Agents + Node 24 + Expo + Bun + UV + Zsh + Neovim + VS Code Web).${NC}"
+    echo -e "${YELLOW}[⚡] MINIMAL CORE SUITE ENABLED! (AI Agents + Node 24 + Expo + Bun + UV + Zsh + Neovim + VS Code/VSCodium Web).${NC}"
 }
 
 # Interactive Whiptail Checklist Menu
@@ -517,6 +541,8 @@ custom_whiptail_menu() {
     CHOICE=$(whiptail --title "Mayanktaker Devbox Custom Component Selection" \
         --checklist "Use Spacebar to toggle items ON/OFF, then press Enter:" 25 85 18 \
         "AI_AGENTS" "20+ AI Agent CLIs (Claude, Kilo, Gemini, Devin, etc)" $([ "$ENABLE_AI_AGENTS" = "true" ] && echo "ON" || echo "OFF") \
+        "VSCODE_WEB" "VS Code Web Server (code-server - Microsoft)" $([ "$ENABLE_VSCODE_WEB" = "true" ] && echo "ON" || echo "OFF") \
+        "VSCODIUM_WEB" "VSCodium Web Server (open-vsx Telemetry-Free)" $([ "$ENABLE_VSCODIUM_WEB" = "true" ] && echo "ON" || echo "OFF") \
         "FLUTTER_ANDROID" "Flutter SDK, Dart & Android SDK API 35" $([ "$ENABLE_FLUTTER_ANDROID" = "true" ] && echo "ON" || echo "OFF") \
         "EXPO" "React Native Expo CLI & eas-cli" $([ "$ENABLE_EXPO" = "true" ] && echo "ON" || echo "OFF") \
         "FASTLANE" "Fastlane Mobile Release Automation" $([ "$ENABLE_FASTLANE" = "true" ] && echo "ON" || echo "OFF") \
@@ -547,6 +573,8 @@ custom_whiptail_menu() {
         3>&1 1>&2 2>&3) || return
 
     ENABLE_AI_AGENTS=false
+    ENABLE_VSCODE_WEB=false
+    ENABLE_VSCODIUM_WEB=false
     ENABLE_FLUTTER_ANDROID=false
     ENABLE_EXPO=false
     ENABLE_FASTLANE=false
@@ -578,6 +606,8 @@ custom_whiptail_menu() {
     for item in $CHOICE; do
         case $(echo "$item" | tr -d '"') in
             AI_AGENTS) ENABLE_AI_AGENTS=true ;;
+            VSCODE_WEB) ENABLE_VSCODE_WEB=true ;;
+            VSCODIUM_WEB) ENABLE_VSCODIUM_WEB=true ;;
             FLUTTER_ANDROID) ENABLE_FLUTTER_ANDROID=true ;;
             EXPO) ENABLE_EXPO=true ;;
             FASTLANE) ENABLE_FASTLANE=true ;;
@@ -620,10 +650,10 @@ run_wizard() {
     echo -e "${BOLD}Choose a Setup Wizard Option:${NC}"
     echo -e "  ${GREEN}${BOLD}[1] 🚀 INSTALL ALL (Full Supercharged Suite - Recommended Default)${NC}"
     echo -e "  ${CYAN}[2] 🎛️  Custom Selection (Toggle components ON/OFF via checklist)${NC}"
-    echo -e "  ${YELLOW}[3] ⚡ Minimal Suite (Core AI Agents + Node 24 + Expo + Bun + UV + VS Code Web)${NC}"
+    echo -e "  ${YELLOW}[3] ⚡ Minimal Suite (Core AI Agents + Node 24 + Expo + Bun + UV + VS Code/VSCodium Web)${NC}"
     echo -e "  ${CYAN}[4] ⚙️ Customize Stack Versions (Node $NODE_VERSION, PHP $PHP_VERSION, Java $JAVA_VERSION)${NC}"
     echo -e "  ${CYAN}[5] 🗄️ Database & Cache Options (MySQL/MariaDB, PostgreSQL, MongoDB, Redis/KeyDB)${NC}"
-    echo -e "  ${CYAN}[6] 💻 Shells & Editors (Zsh, Fish, Neovim/Vim, Micro, Helix)${NC}"
+    echo -e "  ${CYAN}[6] 💻 Shells & Web/Terminal Editors (VS Code MS vs VSCodium Open-VSX, Shells, Editors)${NC}"
     echo -e "  ${CYAN}[7] 🔑 Configure API Keys (.env helper)${NC}"
     echo -e "  ${CYAN}[8] 🔒 Run Host Permissions & Docker Group Pre-Check${NC}"
     echo -e "  [9] 🚪 Exit without changes"

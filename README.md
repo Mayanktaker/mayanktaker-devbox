@@ -1,6 +1,6 @@
 # 🟢 Mayanktaker Devbox
 
-> **Skeptic-audited, production-grade Docker sandbox** for running 20+ AI coding agents, full-stack development tools, and mobile development (Flutter/Android/React Native Expo/Fastlane) — all safely isolated from your host machine. Includes an **Interactive Setup Wizard** to customize stack runtimes (Node, PHP, Java, Rust, Go, Bun, uv, Deno, C/C++), shell choices (Bash, Zsh, Fish), terminal editors (Neovim/Vim, Micro, Helix), and database containers (MySQL, MariaDB, Postgres, Mongo, Redis, KeyDB) with a **Host Permissions Pre-Check & Auto-Fix System**!
+> **Skeptic-audited, production-grade Docker sandbox** for running 20+ AI coding agents, full-stack development tools, and mobile development (Flutter/Android/React Native Expo/Fastlane) — all safely isolated from your host machine. Includes an **Interactive Setup Wizard** to customize stack runtimes (Node, PHP, Java, Rust, Go, Bun, uv, Deno, C/C++), shell choices (Bash, Zsh, Fish), Web IDEs (VS Code Web MS vs VSCodium Web Open-VSX Telemetry-Free), terminal editors (Neovim/Vim, Micro, Helix), and database containers (MySQL, MariaDB, Postgres, Mongo, Redis, KeyDB) with a **Host Permissions Pre-Check & Auto-Fix System**!
 
 **© [Mayanktaker Computers & Web Development](https://mayanktaker.com)**
 
@@ -41,9 +41,11 @@ To ensure users never run into `Permission denied` errors or Docker daemon acces
 Run `./manage.sh wizard` anytime to configure your devbox:
 
 - **🚀 Install All (Full Supercharged Suite)** — Enable everything!
-- **⚡ Minimal Suite** — Ultra-lightweight core setup (AI Agents + Node 24 + Expo + Bun + UV + Zsh + Neovim + VS Code Web)
+- **⚡ Minimal Suite** — Ultra-lightweight core setup (AI Agents + Node 24 + Expo + Bun + UV + Zsh + Neovim + VS Code/VSCodium Web)
 - **🎛️ Custom Component Toggles**:
   - [x] **AI Agent CLIs** (Claude, Kilo, Gemini, Antigravity, Devin, Aider, etc.)
+  - [x] **VS Code Web Server (`code-server` - Microsoft Ecosystem - Port 8085)**
+  - [x] **VSCodium Web Server (`openvscode-server` - Open-VSX Telemetry-Free - Port 8084)**
   - [x] **Mobile Development (Flutter SDK, Dart, Android SDK API 35)**
   - [x] **React Native Expo CLI & eas-cli (Cloud iOS/Android Builds)**
   - [x] **Fastlane Mobile Release Automation**
@@ -87,8 +89,9 @@ cd mayanktaker-devbox
 # 3. Start Devbox web services
 ./manage.sh up
 
-# 4. Access VS Code in your browser
-# → http://localhost:8085
+# 4. Access VS Code or VSCodium in your browser
+# → VS Code Web (MS)      : http://localhost:8085
+# → VSCodium Web (OpenVSX): http://localhost:8084
 ```
 
 ---
@@ -105,13 +108,18 @@ cd mayanktaker-devbox
 
 ---
 
-## 💻 Desktop Apps vs Web IDE & CLI Tools
+## 💻 Web IDE Choices & Desktop Integration
 
-Mayanktaker Devbox comes pre-configured with **VS Code Web (`code-server`)** at `http://localhost:8085` and **noVNC Desktop Viewer** at `http://localhost:6080`.
+Mayanktaker Devbox supports both major open-source web IDEs:
 
-- **GUI / Desktop App Support**: Desktop GUI apps (Chromium, Electron apps, Linux desktop viewers) run via Xvfb + noVNC in your browser at `http://localhost:6080`.
-- **CLI Agents & Tooling**: 20+ AI CLI tools (`claude`, `kilo`, `codex`, `cursor`, `devin`, `gemini`, `antigravity`) run natively inside the sandboxed container shell.
-- **Native Host IDEs**: If you prefer native host desktop IDEs (like Cursor Desktop or VS Code Desktop), you can use the **Remote - Containers / SSH** extension to connect directly to `mayanktaker-devbox`.
+| Web IDE | Port | Marketplace | Telemetry Status |
+| :--- | :--- | :--- | :--- |
+| **VS Code Web** (`code-server`) ⭐ | `8085` | Microsoft Extensions | Telemetry disabled in sandbox |
+| **VSCodium Web** (`openvscode-server`) ⭐ | `8084` | Open-VSX Registry | 100% Telemetry-Free open source |
+
+- **Install Options**: You can install **VS Code Web only**, **VSCodium Web only**, or **BOTH side-by-side** via `./manage.sh wizard` Option `[6]`!
+- **GUI / Desktop App Support**: Desktop GUI apps run via Xvfb + noVNC in your browser at `http://localhost:6080`.
+- **Native Host IDEs**: Connect native host IDEs (Cursor Desktop, VS Code Desktop) using **Remote - Containers / SSH**.
 
 ---
 
@@ -123,6 +131,8 @@ Mayanktaker Devbox comes pre-configured with **VS Code Web (`code-server`)** at 
 | :--- | :--- | :--- | :--- |
 | **Ubuntu** | **26.04 LTS** "Resolute Raccoon" | — | Latest LTS (April 2026) |
 | **Node.js** | **24 LTS** ⭐ | Node 26 Current | Active LTS (Aug 2026) |
+| **VS Code Web** | **Installed (Port 8085)** ⭐ | Optional | Microsoft `code-server` |
+| **VSCodium Web** | **Installed (Port 8084)** ⭐ | Optional | Open-VSX `openvscode-server` |
 | **Flutter SDK** | **Installed** ⭐ | Optional | Full SDK + Dart |
 | **Android SDK** | **API 35** ⭐ | Optional | cmdline-tools, platform-tools, build-tools |
 | **React Native Expo** | **Installed** ⭐ | Optional | `expo-cli` & `eas-cli` (Cloud iOS Builds) |
@@ -138,7 +148,7 @@ Mayanktaker Devbox comes pre-configured with **VS Code Web (`code-server`)** at 
 | **C/C++ Toolchain** | **Optional** | Installed | Clang 18, LLVM 18, CMake, Ninja |
 | **Java** | **21 JDK** ⭐ | Java 17 JDK | Current LTS |
 | **Shells** | **Zsh + Starship** ⭐ | Bash, Fish | Command shell choice |
-| **Editors** | **VS Code Web, Neovim, Micro** ⭐ | Helix | Terminal IDEs & Editors |
+| **Editors** | **VS Code / VSCodium, Neovim, Micro** ⭐ | Helix | Terminal IDEs & Editors |
 
 ### 🗄️ Database & Caching Services
 
@@ -174,7 +184,8 @@ Mayanktaker Devbox comes pre-configured with **VS Code Web (`code-server`)** at 
 
 | Service | URL | Purpose |
 | :--- | :--- | :--- |
-| **VS Code Web** | `http://localhost:8085` | Full VS Code in browser with persistent extensions |
+| **VS Code Web** | `http://localhost:8085` | Microsoft VS Code in browser with persistent extensions |
+| **VSCodium Web** | `http://localhost:8084` | Open-VSX Telemetry-Free VSCodium in browser |
 | **noVNC GUI** | `http://localhost:6080` | View desktop/Electron apps in browser |
 | **phpMyAdmin** | `http://localhost:8086` | Visual MySQL / MariaDB database management |
 | **Redis Commander** | `http://localhost:8087` | Visual Redis / KeyDB cache management |
@@ -221,7 +232,8 @@ All data, settings, extensions, and database records survive container restarts 
 ./manage.sh restart        # Restart all services gracefully
 ./manage.sh shell          # Enter container terminal
 ./manage.sh update         # Update all AI tools, Flutter, npm & pip packages
-./manage.sh code           # Show VS Code Web URL
+./manage.sh code           # Show VS Code Web MS URL (http://localhost:8085)
+./manage.sh vscodium       # Show VSCodium Web Open-VSX URL (http://localhost:8084)
 ./manage.sh gui            # Show noVNC GUI URL
 ./manage.sh pma            # Show phpMyAdmin URL
 ./manage.sh redis-ui       # Show Redis Commander URL

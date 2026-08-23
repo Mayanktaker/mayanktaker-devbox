@@ -114,7 +114,8 @@ case "$1" in
         echo -e "${GREEN}[+] Starting Devbox services (25GB RAM, 10 CPUs)...${NC}"
         docker compose up -d
         echo -e "${GREEN}[✓] All Devbox Web Services Running!${NC}"
-        echo -e "${CYAN}    - VS Code Web     : http://localhost:8085${NC}"
+        echo -e "${CYAN}    - VS Code Web (MS) : http://localhost:8085${NC}"
+        echo -e "${CYAN}    - VSCodium Web     : http://localhost:8084 (Open-VSX Telemetry-Free)${NC}"
         echo -e "${CYAN}    - noVNC GUI Web   : http://localhost:6080${NC}"
         echo -e "${CYAN}    - phpMyAdmin      : http://localhost:8086${NC}"
         echo -e "${CYAN}    - Redis Commander : http://localhost:8087${NC}"
@@ -149,8 +150,13 @@ case "$1" in
         ;;
     code)
         show_banner
-        echo -e "${GREEN}[+] VS Code Web Server:${NC}"
+        echo -e "${GREEN}[+] VS Code Web Server (Microsoft):${NC}"
         echo -e "${CYAN}    👉 http://localhost:8085${NC}"
+        ;;
+    vscodium|codium)
+        show_banner
+        echo -e "${GREEN}[+] VSCodium Web Server (Open-VSX Telemetry-Free):${NC}"
+        echo -e "${CYAN}    👉 http://localhost:8084${NC}"
         ;;
     gui)
         show_banner
@@ -266,7 +272,8 @@ case "$1" in
         echo "  restart        Restart all services gracefully"
         echo "  shell          Launch interactive terminal inside container"
         echo "  update         Update all AI CLI tools, Flutter, npm & pip packages"
-        echo "  code           VS Code Web URL (http://localhost:8085)"
+        echo "  code           VS Code Web (MS) URL (http://localhost:8085)"
+        echo "  vscodium       VSCodium Web (Open-VSX) URL (http://localhost:8084)"
         echo "  gui            noVNC GUI Viewer URL (http://localhost:6080)"
         echo "  pma            phpMyAdmin URL (http://localhost:8086)"
         echo "  redis-ui       Redis Commander URL (http://localhost:8087)"

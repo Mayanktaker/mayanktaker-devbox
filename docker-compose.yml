@@ -33,6 +33,8 @@ services:
         INSTALL_CPP_TOOLCHAIN: ${ENABLE_CPP_TOOLCHAIN:-false}
         INSTALL_ZSH: ${ENABLE_ZSH:-true}
         INSTALL_FISH: ${ENABLE_FISH:-false}
+        INSTALL_VSCODE_WEB: ${ENABLE_VSCODE_WEB:-true}
+        INSTALL_VSCODIUM_WEB: ${ENABLE_VSCODIUM_WEB:-true}
         INSTALL_NEOVIM: ${ENABLE_NEOVIM:-true}
         INSTALL_MICRO: ${ENABLE_MICRO:-true}
         INSTALL_HELIX: ${ENABLE_HELIX:-false}
@@ -43,6 +45,7 @@ services:
     restart: unless-stopped
     ports:
       - "${AGENT_PORT:-8081}:8081"           # Agent Server daemon
+      - "${VSCODIUM_PORT:-8084}:8084"       # VSCodium Web (open-vsx Telemetry-Free)
       - "${VSCODE_PORT:-8085}:8085"         # VS Code Web (code-server)
       - "${GUI_NOVNC_PORT:-6080}:6080"      # noVNC Web Browser GUI Viewer
       - "${FIREBASE_UI_PORT:-4000}:4000"    # Firebase Emulator Suite UI
