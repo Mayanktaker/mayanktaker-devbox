@@ -35,6 +35,12 @@ load_config() {
     ENABLE_REDIS=${ENABLE_REDIS:-true}
     ENABLE_FIREBASE=${ENABLE_FIREBASE:-true}
     ENABLE_DEV_TOOLS=${ENABLE_DEV_TOOLS:-true}
+    ENABLE_COMPOSER=${ENABLE_COMPOSER:-true}
+    ENABLE_BUN=${ENABLE_BUN:-true}
+    ENABLE_UV=${ENABLE_UV:-true}
+    ENABLE_RUST=${ENABLE_RUST:-true}
+    ENABLE_GO=${ENABLE_GO:-false}
+    ENABLE_DENO=${ENABLE_DENO:-false}
     DB_ENGINE=${DB_ENGINE:-mysql}
     DB_ENGINE_IMAGE=${DB_ENGINE_IMAGE:-mysql:8.4}
     NODE_VERSION=${NODE_VERSION:-24}
@@ -73,6 +79,12 @@ ENABLE_MYSQL=$ENABLE_MYSQL
 ENABLE_REDIS=$ENABLE_REDIS
 ENABLE_FIREBASE=$ENABLE_FIREBASE
 ENABLE_DEV_TOOLS=$ENABLE_DEV_TOOLS
+ENABLE_COMPOSER=$ENABLE_COMPOSER
+ENABLE_BUN=$ENABLE_BUN
+ENABLE_UV=$ENABLE_UV
+ENABLE_RUST=$ENABLE_RUST
+ENABLE_GO=$ENABLE_GO
+ENABLE_DENO=$ENABLE_DENO
 DB_ENGINE=$DB_ENGINE
 DB_ENGINE_IMAGE=$DB_ENGINE_IMAGE
 NODE_VERSION=$NODE_VERSION
@@ -88,6 +100,12 @@ EOF
     set_env_var "ENABLE_REDIS" "$ENABLE_REDIS"
     set_env_var "ENABLE_FIREBASE" "$ENABLE_FIREBASE"
     set_env_var "ENABLE_DEV_TOOLS" "$ENABLE_DEV_TOOLS"
+    set_env_var "ENABLE_COMPOSER" "$ENABLE_COMPOSER"
+    set_env_var "ENABLE_BUN" "$ENABLE_BUN"
+    set_env_var "ENABLE_UV" "$ENABLE_UV"
+    set_env_var "ENABLE_RUST" "$ENABLE_RUST"
+    set_env_var "ENABLE_GO" "$ENABLE_GO"
+    set_env_var "ENABLE_DENO" "$ENABLE_DENO"
     set_env_var "DB_ENGINE" "$DB_ENGINE"
     set_env_var "DB_ENGINE_IMAGE" "$DB_ENGINE_IMAGE"
     set_env_var "NODE_VERSION" "$NODE_VERSION"
@@ -239,11 +257,17 @@ show_summary() {
     print_row "🤖 20+ AI Agent CLIs (Claude, Kilo, etc)" "$ENABLE_AI_AGENTS"
     print_row "📱 Mobile Dev (Flutter + Android SDK)" "$ENABLE_FLUTTER_ANDROID"
     print_row "🎭 Browser Testing (Chromium + Playwright)" "$ENABLE_PLAYWRIGHT"
-    print_row "🐘 PHP & Composer Ecosystem" "$ENABLE_PHP"
+    print_row "🐘 PHP & Ecosystem" "$ENABLE_PHP"
     if [ "$ENABLE_PHP" = "true" ]; then
-        printf "  %-35s | ${CYAN}%-20s${NC}\n" "   └─ PHP Version" "[PHP $PHP_VERSION]"
+        printf "  %-35s | ${CYAN}%-20s${NC}\n" "   ├─ PHP Version" "[PHP $PHP_VERSION]"
+        print_row "   └─ Composer Package Manager" "$ENABLE_COMPOSER"
     fi
     printf "  %-35s | ${CYAN}%-20s${NC}\n" "🟢 Node.js Runtime Version" "[Node.js $NODE_VERSION LTS]"
+    print_row "🍞 Bun JS/TS Runtime & PM" "$ENABLE_BUN"
+    print_row "⚡ uv Python Package Manager" "$ENABLE_UV"
+    print_row "🦀 Rust Toolchain (cargo, rustc)" "$ENABLE_RUST"
+    print_row "🐹 Go Language (Golang)" "$ENABLE_GO"
+    print_row "🦕 Deno TS/JS Runtime" "$ENABLE_DENO"
     printf "  %-35s | ${CYAN}%-20s${NC}\n" "☕ Java JDK Version" "[Java $JAVA_VERSION JDK]"
     print_row "🐬 Relational Database Container" "$ENABLE_MYSQL"
     if [ "$ENABLE_MYSQL" = "true" ]; then
@@ -266,6 +290,12 @@ install_all() {
     ENABLE_REDIS=true
     ENABLE_FIREBASE=true
     ENABLE_DEV_TOOLS=true
+    ENABLE_COMPOSER=true
+    ENABLE_BUN=true
+    ENABLE_UV=true
+    ENABLE_RUST=true
+    ENABLE_GO=true
+    ENABLE_DENO=true
     DB_ENGINE="mysql"
     DB_ENGINE_IMAGE="mysql:8.4"
     NODE_VERSION="24"
@@ -285,24 +315,36 @@ install_minimal() {
     ENABLE_REDIS=false
     ENABLE_FIREBASE=false
     ENABLE_DEV_TOOLS=true
+    ENABLE_COMPOSER=false
+    ENABLE_BUN=true
+    ENABLE_UV=true
+    ENABLE_RUST=false
+    ENABLE_GO=false
+    ENABLE_DENO=false
     DB_ENGINE="mysql"
     DB_ENGINE_IMAGE="mysql:8.4"
     NODE_VERSION="24"
     PHP_VERSION="8.5"
     JAVA_VERSION="21"
     save_config
-    echo -e "${YELLOW}[⚡] MINIMAL CORE SUITE ENABLED! (AI Agents + Node 24 + VS Code Web).${NC}"
+    echo -e "${YELLOW}[⚡] MINIMAL CORE SUITE ENABLED! (AI Agents + Node 24 + Bun + UV + VS Code Web).${NC}"
 }
 
 # Interactive Whiptail Checklist Menu
 custom_whiptail_menu() {
     local CHOICE
     CHOICE=$(whiptail --title "Mayanktaker Devbox Custom Component Selection" \
-        --checklist "Use Spacebar to toggle items ON/OFF, then press Enter:" 20 75 8 \
+        --checklist "Use Spacebar to toggle items ON/OFF, then press Enter:" 22 78 12 \
         "AI_AGENTS" "20+ AI Agent CLIs (Claude, Kilo, Gemini, Devin, etc)" $([ "$ENABLE_AI_AGENTS" = "true" ] && echo "ON" || echo "OFF") \
         "FLUTTER_ANDROID" "Flutter SDK, Dart & Android SDK API 35" $([ "$ENABLE_FLUTTER_ANDROID" = "true" ] && echo "ON" || echo "OFF") \
         "PLAYWRIGHT" "Chromium & Playwright Browser Automation" $([ "$ENABLE_PLAYWRIGHT" = "true" ] && echo "ON" || echo "OFF") \
         "PHP" "PHP & Composer Ecosystem" $([ "$ENABLE_PHP" = "true" ] && echo "ON" || echo "OFF") \
+        "COMPOSER" "Composer PHP Package Manager" $([ "$ENABLE_COMPOSER" = "true" ] && echo "ON" || echo "OFF") \
+        "BUN" "Bun Fast JS/TS Runtime & PM" $([ "$ENABLE_BUN" = "true" ] && echo "ON" || echo "OFF") \
+        "UV" "uv Fast Python Package Manager" $([ "$ENABLE_UV" = "true" ] && echo "ON" || echo "OFF") \
+        "RUST" "Rust Toolchain (cargo, rustc, rustup)" $([ "$ENABLE_RUST" = "true" ] && echo "ON" || echo "OFF") \
+        "GO" "Go Language (Golang)" $([ "$ENABLE_GO" = "true" ] && echo "ON" || echo "OFF") \
+        "DENO" "Deno TS/JS Runtime" $([ "$ENABLE_DENO" = "true" ] && echo "ON" || echo "OFF") \
         "MYSQL" "Relational Database Container + phpMyAdmin" $([ "$ENABLE_MYSQL" = "true" ] && echo "ON" || echo "OFF") \
         "REDIS" "Redis 8 Cache Container + Redis Commander" $([ "$ENABLE_REDIS" = "true" ] && echo "ON" || echo "OFF") \
         "FIREBASE" "Firebase CLI & Local Emulator Suite" $([ "$ENABLE_FIREBASE" = "true" ] && echo "ON" || echo "OFF") \
@@ -313,6 +355,12 @@ custom_whiptail_menu() {
     ENABLE_FLUTTER_ANDROID=false
     ENABLE_PLAYWRIGHT=false
     ENABLE_PHP=false
+    ENABLE_COMPOSER=false
+    ENABLE_BUN=false
+    ENABLE_UV=false
+    ENABLE_RUST=false
+    ENABLE_GO=false
+    ENABLE_DENO=false
     ENABLE_MYSQL=false
     ENABLE_REDIS=false
     ENABLE_FIREBASE=false
@@ -324,6 +372,12 @@ custom_whiptail_menu() {
             FLUTTER_ANDROID) ENABLE_FLUTTER_ANDROID=true ;;
             PLAYWRIGHT) ENABLE_PLAYWRIGHT=true ;;
             PHP) ENABLE_PHP=true ;;
+            COMPOSER) ENABLE_COMPOSER=true ;;
+            BUN) ENABLE_BUN=true ;;
+            UV) ENABLE_UV=true ;;
+            RUST) ENABLE_RUST=true ;;
+            GO) ENABLE_GO=true ;;
+            DENO) ENABLE_DENO=true ;;
             MYSQL) ENABLE_MYSQL=true ;;
             REDIS) ENABLE_REDIS=true ;;
             FIREBASE) ENABLE_FIREBASE=true ;;
@@ -349,31 +403,41 @@ custom_cli_menu() {
     while true; do
         show_banner
         show_summary
-        echo -e "${BOLD}Select a component to toggle, 'V' for Stack Versions, 'D' for DB Engine, or 'S' to Save & Exit:${NC}"
+        echo -e "${BOLD}Select a component number to toggle, 'V' for Versions, 'D' for DB Engine, or 'S' to Save & Exit:${NC}"
         echo "  [1] Toggle AI Agent CLIs"
         echo "  [2] Toggle Mobile Dev (Flutter & Android SDK)"
         echo "  [3] Toggle Browser Testing (Chromium & Playwright)"
         echo "  [4] Toggle PHP & Composer"
-        echo "  [5] Toggle Relational Database Container + phpMyAdmin"
-        echo "  [6] Toggle Redis 8 Cache + Redis Commander"
-        echo "  [7] Toggle Firebase CLI & Emulators"
-        echo "  [8] Toggle Dev TUI Tools (lazygit, bat, etc)"
+        echo "  [5] Toggle Bun JS/TS Runtime"
+        echo "  [6] Toggle uv Python Package Manager"
+        echo "  [7] Toggle Rust Toolchain (cargo, rustc)"
+        echo "  [8] Toggle Go Language (Golang)"
+        echo "  [9] Toggle Deno Runtime"
+        echo " [10] Toggle Relational Database Container + phpMyAdmin"
+        echo " [11] Toggle Redis 8 Cache + Redis Commander"
+        echo " [12] Toggle Firebase CLI & Emulators"
+        echo " [13] Toggle Dev TUI Tools (lazygit, bat, etc)"
         echo "  [V] Customize Stack Runtime Versions (Node, PHP, Java)"
         echo "  [D] Change Database Engine (MySQL 8.4 vs MariaDB 11.4)"
         echo "  [A] Enable ALL Components"
         echo "  [S] Save & Finish"
         echo ""
-        read -p "Enter choice [1-8, V, D, A, S]: " input_choice
+        read -p "Enter choice [1-13, V, D, A, S]: " input_choice
 
         case "$input_choice" in
             1) toggle_var "ENABLE_AI_AGENTS" ;;
             2) toggle_var "ENABLE_FLUTTER_ANDROID" ;;
             3) toggle_var "ENABLE_PLAYWRIGHT" ;;
             4) toggle_var "ENABLE_PHP" ;;
-            5) toggle_var "ENABLE_MYSQL" ;;
-            6) toggle_var "ENABLE_REDIS" ;;
-            7) toggle_var "ENABLE_FIREBASE" ;;
-            8) toggle_var "ENABLE_DEV_TOOLS" ;;
+            5) toggle_var "ENABLE_BUN" ;;
+            6) toggle_var "ENABLE_UV" ;;
+            7) toggle_var "ENABLE_RUST" ;;
+            8) toggle_var "ENABLE_GO" ;;
+            9) toggle_var "ENABLE_DENO" ;;
+            10) toggle_var "ENABLE_MYSQL" ;;
+            11) toggle_var "ENABLE_REDIS" ;;
+            12) toggle_var "ENABLE_FIREBASE" ;;
+            13) toggle_var "ENABLE_DEV_TOOLS" ;;
             [vV]) select_stack_versions ;;
             [dD]) select_db_engine ;;
             [aA]) install_all ; break ;;
@@ -392,7 +456,7 @@ run_wizard() {
     echo -e "${BOLD}Choose a Setup Wizard Option:${NC}"
     echo -e "  ${GREEN}${BOLD}[1] 🚀 INSTALL ALL (Full Supercharged Suite - Recommended Default)${NC}"
     echo -e "  ${CYAN}[2] 🎛️  Custom Selection (Toggle components ON/OFF)${NC}"
-    echo -e "  ${YELLOW}[3] ⚡ Minimal Suite (Core AI Agents + Node 24 + VS Code Web)${NC}"
+    echo -e "  ${YELLOW}[3] ⚡ Minimal Suite (Core AI Agents + Node 24 + Bun + UV + VS Code Web)${NC}"
     echo -e "  ${CYAN}[4] ⚙️ Customize Stack Versions (Node $NODE_VERSION, PHP $PHP_VERSION, Java $JAVA_VERSION)${NC}"
     echo -e "  ${CYAN}[5] 🗄️ Select DB Engine (Current: $DB_ENGINE_IMAGE)${NC}"
     echo -e "  ${CYAN}[6] 🔑 Configure API Keys (.env helper)${NC}"

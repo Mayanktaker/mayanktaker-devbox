@@ -1,7 +1,7 @@
 # © Mayanktaker Computers & Web Development | https://mayanktaker.com
 # Ultimate Multi-Agent Sandbox Dockerfile (Ubuntu 26.04 LTS "Resolute Raccoon")
-# Skeptic-audited & Fully Customizable Stack: Node, PHP, Java, AI Agents, Flutter, Playwright
-# Recommended Defaults: Node 24 LTS, PHP 8.5, Java 21 JDK, MySQL 8.4 LTS, Redis 8 Alpine
+# Skeptic-audited & Fully Modular Stack: Node, PHP, Java, Rust, Go, Bun, UV, Composer, AI Agents, Flutter, Playwright
+# Recommended Defaults: Node 24 LTS, PHP 8.5, Java 21 JDK, Bun, UV, Composer, Rust, MySQL 8.4 LTS, Redis 8 Alpine
 
 FROM ubuntu:26.04 AS base
 
@@ -15,6 +15,12 @@ ARG INSTALL_PLAYWRIGHT=true
 ARG INSTALL_PHP=true
 ARG INSTALL_DEV_TOOLS=true
 ARG INSTALL_FIREBASE=true
+ARG INSTALL_COMPOSER=true
+ARG INSTALL_BUN=true
+ARG INSTALL_UV=true
+ARG INSTALL_RUST=true
+ARG INSTALL_GO=false
+ARG INSTALL_DENO=false
 
 # Prevent interactive prompts during installation
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -24,7 +30,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     FLUTTER_HOME=/opt/flutter \
     CHROME_BIN=/usr/bin/chromium-browser \
     PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers \
-    PATH="/home/agent/.local/bin:/home/agent/.bun/bin:/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:${PATH}"
+    PATH="/home/agent/.cargo/bin:/home/agent/.deno/bin:/usr/local/go/bin:/home/agent/.local/bin:/home/agent/.bun/bin:/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:${PATH}"
 
 # ── Layer 1: Core Ubuntu system packages, build tools, Java & terminal productivity ──
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -103,28 +109,40 @@ RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg -
     apt-get update && apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-# ── Layer 4: PHP (Configurable: PHP 8.5 default, conditional on INSTALL_PHP) ──
+# ── Layer 4: PHP & Composer (Conditional on INSTALL_PHP & INSTALL_COMPOSER) ──
 RUN if [ "$INSTALL_PHP" = "true" ]; then \
       add-apt-repository -y ppa:ondrej/php && \
       apt-get update && apt-get install -y --no-install-recommends \
       php${PHP_VERSION}-cli php${PHP_VERSION}-mysql php${PHP_VERSION}-sqlite3 php${PHP_VERSION}-redis php${PHP_VERSION}-curl php${PHP_VERSION}-mbstring \
-      php${PHP_VERSION}-xml php${PHP_VERSION}-zip php${PHP_VERSION}-intl php${PHP_VERSION}-gd php${PHP_VERSION}-bcmath php${PHP_VERSION}-xdebug composer && \
+      php${PHP_VERSION}-xml php${PHP_VERSION}-zip php${PHP_VERSION}-intl php${PHP_VERSION}-gd php${PHP_VERSION}-bcmath php${PHP_VERSION}-xdebug && \
+      if [ "$INSTALL_COMPOSER" = "true" ]; then apt-get install -y composer ; fi && \
       rm -rf /var/lib/apt/lists/* ; \
     fi
 
-# ── Layer 5: code-server (VS Code Web), Bun, pnpm, yarn ──
+# ── Layer 5: code-server (VS Code Web), Bun, pnpm, yarn, Deno ──
 RUN curl -fsSL https://code-server.dev/install.sh | sh
-RUN curl -fsSL https://bun.sh/install | bash
 RUN npm install -g pnpm yarn
+RUN if [ "$INSTALL_BUN" = "true" ]; then curl -fsSL https://bun.sh/install | bash ; fi
+RUN if [ "$INSTALL_DENO" = "true" ]; then curl -fsSL https://deno.land/install.sh | sh ; fi
 
 # ── Layer 6: uv (Python package manager), Aider & DeepSeek harness ──
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    pip3 install --no-cache-dir --break-system-packages httpie ruff && \
+RUN pip3 install --no-cache-dir --break-system-packages httpie ruff && \
+    if [ "$INSTALL_UV" = "true" ]; then curl -LsSf https://astral.sh/uv/install.sh | sh ; fi && \
     if [ "$INSTALL_AI_AGENTS" = "true" ]; then \
       pip3 install --no-cache-dir --break-system-packages aider-chat lm-eval transformers ; \
     fi
 
-# ── Layer 7: Flutter SDK + Dart (Conditional on INSTALL_FLUTTER_ANDROID) ──
+# ── Layer 7: Rust Toolchain (rustup, cargo, rustc) ──
+RUN if [ "$INSTALL_RUST" = "true" ]; then \
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y ; \
+    fi
+
+# ── Layer 8: Go Language (Golang) ──
+RUN if [ "$INSTALL_GO" = "true" ]; then \
+      curl -fsSL https://go.dev/dl/go1.23.0.linux-amd64.tar.gz | tar -C /usr/local -xz ; \
+    fi
+
+# ── Layer 9: Flutter SDK + Dart (Conditional on INSTALL_FLUTTER_ANDROID) ──
 RUN if [ "$INSTALL_FLUTTER_ANDROID" = "true" ]; then \
       git clone https://github.com/flutter/flutter.git -b stable --depth 1 /opt/flutter && \
       /opt/flutter/bin/flutter --disable-analytics && \
@@ -135,7 +153,7 @@ RUN if [ "$INSTALL_FLUTTER_ANDROID" = "true" ]; then \
       mkdir -p /opt/flutter ; \
     fi
 
-# ── Layer 8: Android SDK command-line tools (Conditional on INSTALL_FLUTTER_ANDROID) ──
+# ── Layer 10: Android SDK command-line tools (Conditional on INSTALL_FLUTTER_ANDROID) ──
 RUN if [ "$INSTALL_FLUTTER_ANDROID" = "true" ]; then \
       mkdir -p ${ANDROID_HOME}/cmdline-tools && \
       curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/cmdline-tools.zip && \
@@ -150,18 +168,18 @@ RUN if [ "$INSTALL_FLUTTER_ANDROID" = "true" ]; then \
       mkdir -p ${ANDROID_HOME} ; \
     fi
 
-# ── Layer 9: Playwright + Chromium browsers (Conditional on INSTALL_PLAYWRIGHT) ──
+# ── Layer 11: Playwright + Chromium browsers (Conditional on INSTALL_PLAYWRIGHT) ──
 RUN if [ "$INSTALL_PLAYWRIGHT" = "true" ]; then \
       npx playwright install --with-deps chromium || true ; \
     fi
 
-# ── Layer 10: lazygit + lazydocker TUI tools (Conditional on INSTALL_DEV_TOOLS) ──
+# ── Layer 12: lazygit + lazydocker TUI tools (Conditional on INSTALL_DEV_TOOLS) ──
 RUN if [ "$INSTALL_DEV_TOOLS" = "true" ]; then \
       curl -fsSL https://raw.githubusercontent.com/jesseduffield/lazygit/master/scripts/install_update_linux.sh | bash && \
       curl -fsSL https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | bash ; \
     fi
 
-# ── Layer 11: AI Multi-Agent CLI Tools, ORMs & Firebase (npm global) ──
+# ── Layer 13: AI Multi-Agent CLI Tools, ORMs & Firebase (npm global) ──
 RUN if [ "$INSTALL_AI_AGENTS" = "true" ]; then \
       npm install -g --allow-scripts \
       prisma drizzle-kit \
@@ -173,31 +191,31 @@ RUN if [ "$INSTALL_AI_AGENTS" = "true" ]; then \
       npm install -g firebase-tools || true ; \
     fi
 
-# ── Layer 12: Devin CLI (pip, conditional on INSTALL_AI_AGENTS) ──
+# ── Layer 14: Devin CLI (pip, conditional on INSTALL_AI_AGENTS) ──
 RUN if [ "$INSTALL_AI_AGENTS" = "true" ]; then \
       pip3 install --no-cache-dir --break-system-packages devin-cli || true ; \
     fi
 
-# ── Layer 13: Antigravity CLI (official install script, conditional on INSTALL_AI_AGENTS) ──
+# ── Layer 15: Antigravity CLI (official install script, conditional on INSTALL_AI_AGENTS) ──
 RUN if [ "$INSTALL_AI_AGENTS" = "true" ]; then \
       curl -fsSL https://antigravity.google/cli/install.sh | bash || true ; \
     fi
 
-# ── Layer 14: bat/fd symlinks ──
+# ── Layer 16: bat/fd symlinks ──
 RUN mkdir -p /usr/local/bin && \
     ln -sf /usr/bin/batcat /usr/local/bin/bat 2>/dev/null || true && \
     ln -sf /usr/bin/fdfind /usr/local/bin/fd 2>/dev/null || true
 
-# ── Layer 15: Auto-updater script ──
+# ── Layer 17: Auto-updater script ──
 RUN echo '#!/usr/bin/env bash\necho "[+] Updating installed CLI tools, Flutter & packages..."\nnpm update -g\npip3 install --upgrade httpie ruff --break-system-packages\nif [ -d "/opt/flutter/.git" ]; then /opt/flutter/bin/flutter upgrade; fi\necho "[✓] All tools updated!"' > /usr/local/bin/update-tools && \
     chmod +x /usr/local/bin/update-tools
 
-# ── Layer 16: Create non-root developer user 'agent' with passwordless sudo ──
+# ── Layer 18: Create non-root developer user 'agent' with passwordless sudo ──
 RUN useradd -m -u 1000 -s /bin/bash agent && \
     echo "agent ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
     mkdir -p /workspace /home/agent/.kilo /home/agent/.ssh /home/agent/.cache/composer \
              /home/agent/.config/code-server /home/agent/.config/configstore \
-             /home/agent/.local/share/code-server /home/agent/.android && \
+             /home/agent/.local/share/code-server /home/agent/.android /home/agent/.cargo && \
     echo 'alias fb="firebase"\nalias c="claude"\nalias k="kilo"\nalias a="aider"\nalias db="mysql -u root -psecret -h mysql-db sandbox_db"\nalias r="redis-cli -h redis-cache"\nalias gs="git status"\nalias lg="lazygit"\nalias ld="lazydocker"\nalias cat="bat --paging=never"\nalias ls="eza --icons --group-directories-first"\nalias find="fd"\nalias flutter="/opt/flutter/bin/flutter"\nalias dart="/opt/flutter/bin/dart"' >> /home/agent/.bashrc && \
     chown -R agent:agent /workspace /home/agent /opt/flutter /opt/android-sdk
 

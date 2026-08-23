@@ -1,6 +1,6 @@
 # 🟢 Mayanktaker Devbox
 
-> **Skeptic-audited, production-grade Docker sandbox** for running 20+ AI coding agents, full-stack development tools, and mobile development (Flutter/Android) — all safely isolated from your host machine. Includes an **Interactive Setup Wizard** to customize stack versions (Node, PHP, Java, DB) or enable/disable components on demand with **Recommended Defaults pre-selected**!
+> **Skeptic-audited, production-grade Docker sandbox** for running 20+ AI coding agents, full-stack development tools, and mobile development (Flutter/Android) — all safely isolated from your host machine. Includes an **Interactive Setup Wizard** to customize stack runtimes (Node, PHP, Java, Rust, Go, Bun, uv, Deno, DB) or enable/disable components on demand with **Recommended Defaults pre-selected**!
 
 **© [Mayanktaker Computers & Web Development](https://mayanktaker.com)**
 
@@ -34,11 +34,16 @@ Run `./manage.sh wizard` anytime to configure your devbox:
   - **PHP**: `PHP 8.5` (**Recommended Default**) vs `PHP 8.4`
   - **Java**: `Java 21 JDK` (**Recommended Default**) vs `Java 17 JDK`
   - **Database Engine**: `MySQL 8.4 LTS` (**Recommended Default**) vs `MariaDB 11.4 LTS`
-- **🎛️ Custom Selection** — Interactively toggle:
+- **🎛️ Custom Component Toggles**:
   - [x] **AI Agent CLIs** (Claude, Kilo, Gemini, Antigravity, Devin, Aider, etc.)
   - [x] **Mobile Development** (Flutter SDK, Dart, Android SDK API 35)
   - [x] **Browser Testing & Automation** (Chromium, Playwright)
   - [x] **PHP & Composer Ecosystem**
+  - [x] **Bun JS/TS Runtime & Fast Package Manager** ⭐
+  - [x] **uv Python Package Manager & Resolver** ⭐
+  - [x] **Rust Toolchain (rustup, cargo, rustc)** ⭐
+  - [ ] **Go Language (Golang)**
+  - [ ] **Deno TS/JS Runtime**
   - [x] **Relational Database Container + phpMyAdmin**
   - [x] **Redis 8 Cache Container + Redis Commander**
   - [x] **Firebase CLI & Local Emulator Suite**
@@ -87,10 +92,15 @@ cd mayanktaker-devbox
 | **Ubuntu** | **26.04 LTS** "Resolute Raccoon" | — | Latest LTS (April 2026) |
 | **Node.js** | **24 LTS** ⭐ | Node 26 Current | Active LTS (Aug 2026) |
 | **PHP** | **8.5** ⭐ | PHP 8.4 | Latest stable (8.5.9) |
+| **Composer** | **Installed** ⭐ | Optional | PHP Package Manager |
+| **Bun** | **Installed** ⭐ | Optional | Fast JS/TS Runtime & PM |
+| **uv** | **Installed** ⭐ | Optional | Fast Python Package Resolver |
+| **Rust** | **Installed** ⭐ | Optional | rustup, cargo, rustc |
+| **Go (Golang)** | **Optional** | Installed | Go 1.23+ compiled language |
+| **Deno** | **Optional** | Installed | Deno TS/JS runtime |
 | **Java** | **21 JDK** ⭐ | Java 17 JDK | Current LTS |
 | **Database** | **MySQL 8.4 LTS** ⭐ | MariaDB 11.4 LTS | Relational DB |
 | **Redis** | **Redis 8 Alpine** ⭐ | — | In-memory cache |
-| **Bun** | **Latest** | — | Fast JS runtime & package manager |
 | **Flutter** | **Stable** | — | Full SDK with Dart |
 | **Android SDK** | **API 35** | — | cmdline-tools, platform-tools, build-tools 35 |
 

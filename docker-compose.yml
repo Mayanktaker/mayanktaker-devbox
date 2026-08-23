@@ -19,6 +19,12 @@ services:
         INSTALL_PHP: ${ENABLE_PHP:-true}
         INSTALL_DEV_TOOLS: ${ENABLE_DEV_TOOLS:-true}
         INSTALL_FIREBASE: ${ENABLE_FIREBASE:-true}
+        INSTALL_COMPOSER: ${ENABLE_COMPOSER:-true}
+        INSTALL_BUN: ${ENABLE_BUN:-true}
+        INSTALL_UV: ${ENABLE_UV:-true}
+        INSTALL_RUST: ${ENABLE_RUST:-true}
+        INSTALL_GO: ${ENABLE_GO:-false}
+        INSTALL_DENO: ${ENABLE_DENO:-false}
     container_name: devbox
     hostname: devbox
     restart: unless-stopped
