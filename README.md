@@ -1,6 +1,6 @@
 # 🟢 Mayanktaker Devbox
 
-> **Skeptic-audited, production-grade Docker sandbox** for running 20+ AI coding agents, full-stack development tools, and mobile development (Flutter/Android) — all safely isolated from your host machine. Includes an **Interactive Setup Wizard** to customize stack runtimes (Node, PHP, Java, Rust, Go, Bun, uv, Deno, DB) or enable/disable components on demand with **Recommended Defaults pre-selected**!
+> **Skeptic-audited, production-grade Docker sandbox** for running 20+ AI coding agents, full-stack development tools, and mobile development (Flutter/Android) — all safely isolated from your host machine. Includes an **Interactive Setup Wizard** to customize stack runtimes (Node, PHP, Java, Rust, Go, Bun, uv, Deno, C/C++), shell choices (Bash, Zsh, Fish), terminal editors (Neovim/Vim, Micro, Helix), and database containers (MySQL, MariaDB, Postgres, Mongo, Redis, KeyDB)!
 
 **© [Mayanktaker Computers & Web Development](https://mayanktaker.com)**
 
@@ -28,24 +28,29 @@ Special thanks to Reddit user **[u/kaas_is_leven](https://www.reddit.com/r/kiloc
 
 Run `./manage.sh wizard` anytime to configure your devbox:
 
-- **🚀 Install All (Full Supercharged Suite)** — Enable everything with recommended defaults!
-- **⚙️ Stack Runtime Versions** (Customizable with Recommended Defaults pre-selected):
-  - **Node.js**: `Node.js 24 LTS` (**Recommended Default**) vs `Node.js 26 Current`
-  - **PHP**: `PHP 8.5` (**Recommended Default**) vs `PHP 8.4`
-  - **Java**: `Java 21 JDK` (**Recommended Default**) vs `Java 17 JDK`
-  - **Database Engine**: `MySQL 8.4 LTS` (**Recommended Default**) vs `MariaDB 11.4 LTS`
+- **🚀 Install All (Full Supercharged Suite)** — Enable everything!
+- **⚡ Minimal Suite** — Ultra-lightweight core setup (AI Agents + Node 24 + Bun + UV + Zsh + Neovim + VS Code Web)
 - **🎛️ Custom Component Toggles**:
   - [x] **AI Agent CLIs** (Claude, Kilo, Gemini, Antigravity, Devin, Aider, etc.)
   - [x] **Mobile Development** (Flutter SDK, Dart, Android SDK API 35)
   - [x] **Browser Testing & Automation** (Chromium, Playwright)
   - [x] **PHP & Composer Ecosystem**
-  - [x] **Bun JS/TS Runtime & Fast Package Manager** ⭐
-  - [x] **uv Python Package Manager & Resolver** ⭐
-  - [x] **Rust Toolchain (rustup, cargo, rustc)** ⭐
-  - [ ] **Go Language (Golang)**
+  - [x] **Bun JS/TS Runtime & Fast Package Manager**
+  - [x] **uv Python Package Manager & Resolver**
+  - [x] **Rust Toolchain (rustup, cargo, rustc)**
+  - [ ] **Go Language (Golang 1.23)**
   - [ ] **Deno TS/JS Runtime**
-  - [x] **Relational Database Container + phpMyAdmin**
-  - [x] **Redis 8 Cache Container + Redis Commander**
+  - [ ] **C/C++ Modern Toolchain (Clang 18, LLVM 18, CMake, Ninja, GDB)**
+  - [x] **Zsh Shell + Starship Prompt**
+  - [ ] **Fish Shell**
+  - [x] **Neovim & Vim Terminal Editor**
+  - [x] **Micro Terminal Text Editor**
+  - [ ] **Helix Modal Editor**
+  - [x] **Web & Frontend Scaffolding CLIs (Astro, Next.js, Vite, Tailwind CLI)**
+  - [x] **MySQL 8.4 / MariaDB 11.4 Container + phpMyAdmin**
+  - [ ] **PostgreSQL 17 Container + pgAdmin 4 UI**
+  - [ ] **MongoDB 8 Container + Mongo Express UI**
+  - [x] **Redis 8 / KeyDB Cache Container + Redis Commander**
   - [x] **Firebase CLI & Local Emulator Suite**
   - [x] **Developer Productivity TUI Tools** (lazygit, lazydocker, bat, eza, fd, ripgrep)
 - **🔑 API Keys Configuration Helper** — Easily set API keys for OpenAI, Anthropic, Gemini, OpenRouter, Kilo, OpenCode, Devin, Kimi, Cursor, DeepSeek, Mistral.
@@ -85,7 +90,7 @@ cd mayanktaker-devbox
 
 ## 🧰 What's Included
 
-### Base OS & Runtimes (Configurable Defaults)
+### Base OS, Runtimes & Compilers
 
 | Component | Recommended Default | Alternative Choice | Notes |
 | :--- | :--- | :--- | :--- |
@@ -98,11 +103,19 @@ cd mayanktaker-devbox
 | **Rust** | **Installed** ⭐ | Optional | rustup, cargo, rustc |
 | **Go (Golang)** | **Optional** | Installed | Go 1.23+ compiled language |
 | **Deno** | **Optional** | Installed | Deno TS/JS runtime |
+| **C/C++ Toolchain** | **Optional** | Installed | Clang 18, LLVM 18, CMake, Ninja |
 | **Java** | **21 JDK** ⭐ | Java 17 JDK | Current LTS |
-| **Database** | **MySQL 8.4 LTS** ⭐ | MariaDB 11.4 LTS | Relational DB |
-| **Redis** | **Redis 8 Alpine** ⭐ | — | In-memory cache |
-| **Flutter** | **Stable** | — | Full SDK with Dart |
-| **Android SDK** | **API 35** | — | cmdline-tools, platform-tools, build-tools 35 |
+| **Shells** | **Zsh + Starship** ⭐ | Bash, Fish | Command shell choice |
+| **Editors** | **VS Code Web, Neovim, Micro** ⭐ | Helix | Terminal IDEs & Editors |
+
+### 🗄️ Database & Caching Services
+
+| Service | Container Image | Port | Web Management GUI |
+| :--- | :--- | :--- | :--- |
+| **Relational DB** | MySQL 8.4 LTS ⭐ / MariaDB 11.4 | `3306` | phpMyAdmin (`http://localhost:8086`) |
+| **PostgreSQL DB** | PostgreSQL 17 | `5432` | pgAdmin 4 (`http://localhost:8088`) |
+| **MongoDB** | MongoDB 8.0 | `27017` | Mongo Express (`http://localhost:8089`) |
+| **Cache Engine** | Redis 8 Alpine ⭐ / KeyDB | `6379` | Redis Commander (`http://localhost:8087`) |
 
 ### 🤖 AI Coding Agent CLIs (20+)
 
@@ -132,7 +145,9 @@ cd mayanktaker-devbox
 | **VS Code Web** | `http://localhost:8085` | Full VS Code in browser with persistent extensions |
 | **noVNC GUI** | `http://localhost:6080` | View desktop/Electron apps in browser |
 | **phpMyAdmin** | `http://localhost:8086` | Visual MySQL / MariaDB database management |
-| **Redis Commander** | `http://localhost:8087` | Visual Redis cache management |
+| **Redis Commander** | `http://localhost:8087` | Visual Redis / KeyDB cache management |
+| **pgAdmin 4 UI** | `http://localhost:8088` | Visual PostgreSQL database management |
+| **Mongo Express UI** | `http://localhost:8089` | Visual MongoDB database management |
 | **Firebase UI** | `http://localhost:4000` | Firebase Local Emulator Suite |
 
 ---
@@ -142,7 +157,7 @@ cd mayanktaker-devbox
 | What's Persisted | Docker Volume | Purpose |
 | :--- | :--- | :--- |
 | Project source code | `./workspace` (bind mount) | Your repos and code |
-| User home directory | `agent_home` | `.bashrc`, `.gitconfig`, dotfiles |
+| User home directory | `agent_home` | `.bashrc`, `.zshrc`, dotfiles |
 | SSH keys | `agent_ssh` | GitHub auth, server keys |
 | VS Code settings | `vscode_data` | Keybindings, user settings |
 | VS Code extensions | `vscode_extensions` | All installed extensions |
@@ -151,7 +166,10 @@ cd mayanktaker-devbox
 | Python/pip/UV cache | `pip_cache` | Package download cache |
 | Composer cache | `composer_cache` | PHP package cache |
 | MySQL / MariaDB database | `mysql_data` | All database tables & records |
-| Redis cache | `redis_data` | AOF persistent cache data |
+| PostgreSQL database | `postgres_data` | Postgres database storage |
+| pgAdmin settings | `pgadmin_data` | pgAdmin configuration & servers |
+| MongoDB database | `mongo_data` | Mongo database documents |
+| Redis / KeyDB cache | `redis_data` | AOF persistent cache data |
 | Android/Gradle cache | `android_cache` | SDK downloads, Gradle builds |
 
 ---
@@ -161,7 +179,7 @@ cd mayanktaker-devbox
 ```bash
 ./manage.sh wizard         # Run Interactive Customization Wizard
 ./manage.sh keys           # View or configure API keys (.env)
-./manage.sh build          # Build the Docker image with current settings
+./manage.sh build          # Build the Devbox Docker image with current settings
 ./manage.sh up             # Start all enabled services
 ./manage.sh down           # Stop all services (data persisted)
 ./manage.sh restart        # Restart all services gracefully
@@ -171,9 +189,13 @@ cd mayanktaker-devbox
 ./manage.sh gui            # Show noVNC GUI URL
 ./manage.sh pma            # Show phpMyAdmin URL
 ./manage.sh redis-ui       # Show Redis Commander URL
+./manage.sh pgadmin        # Show pgAdmin 4 PostgreSQL UI URL
+./manage.sh mongo-ui       # Show Mongo Express MongoDB UI URL
 ./manage.sh firebase       # Show Firebase Emulator UI URL
-./manage.sh db             # Open Database CLI terminal
-./manage.sh redis          # Open Redis CLI terminal
+./manage.sh db             # Open MySQL database terminal
+./manage.sh pg             # Open PostgreSQL terminal
+./manage.sh mongo          # Open MongoDB terminal
+./manage.sh redis          # Open Redis Cache CLI terminal
 ./manage.sh backup         # Database dump to ./backups/
 ./manage.sh auto-backup    # Setup daily 2:00 AM cron backup
 ./manage.sh health         # Check service healthchecks

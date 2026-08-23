@@ -32,6 +32,8 @@ load_config() {
     ENABLE_PLAYWRIGHT=${ENABLE_PLAYWRIGHT:-true}
     ENABLE_PHP=${ENABLE_PHP:-true}
     ENABLE_MYSQL=${ENABLE_MYSQL:-true}
+    ENABLE_POSTGRES=${ENABLE_POSTGRES:-false}
+    ENABLE_MONGO=${ENABLE_MONGO:-false}
     ENABLE_REDIS=${ENABLE_REDIS:-true}
     ENABLE_FIREBASE=${ENABLE_FIREBASE:-true}
     ENABLE_DEV_TOOLS=${ENABLE_DEV_TOOLS:-true}
@@ -41,8 +43,17 @@ load_config() {
     ENABLE_RUST=${ENABLE_RUST:-true}
     ENABLE_GO=${ENABLE_GO:-false}
     ENABLE_DENO=${ENABLE_DENO:-false}
+    ENABLE_CPP_TOOLCHAIN=${ENABLE_CPP_TOOLCHAIN:-false}
+    ENABLE_ZSH=${ENABLE_ZSH:-true}
+    ENABLE_FISH=${ENABLE_FISH:-false}
+    ENABLE_NEOVIM=${ENABLE_NEOVIM:-true}
+    ENABLE_MICRO=${ENABLE_MICRO:-true}
+    ENABLE_HELIX=${ENABLE_HELIX:-false}
+    ENABLE_WEB_TOOLING=${ENABLE_WEB_TOOLING:-true}
+    ENABLE_POSTGRES_CLIENT=${ENABLE_POSTGRES_CLIENT:-true}
     DB_ENGINE=${DB_ENGINE:-mysql}
     DB_ENGINE_IMAGE=${DB_ENGINE_IMAGE:-mysql:8.4}
+    REDIS_ENGINE_IMAGE=${REDIS_ENGINE_IMAGE:-redis:8-alpine}
     NODE_VERSION=${NODE_VERSION:-24}
     PHP_VERSION=${PHP_VERSION:-8.5}
     JAVA_VERSION=${JAVA_VERSION:-21}
@@ -76,6 +87,8 @@ ENABLE_FLUTTER_ANDROID=$ENABLE_FLUTTER_ANDROID
 ENABLE_PLAYWRIGHT=$ENABLE_PLAYWRIGHT
 ENABLE_PHP=$ENABLE_PHP
 ENABLE_MYSQL=$ENABLE_MYSQL
+ENABLE_POSTGRES=$ENABLE_POSTGRES
+ENABLE_MONGO=$ENABLE_MONGO
 ENABLE_REDIS=$ENABLE_REDIS
 ENABLE_FIREBASE=$ENABLE_FIREBASE
 ENABLE_DEV_TOOLS=$ENABLE_DEV_TOOLS
@@ -85,8 +98,17 @@ ENABLE_UV=$ENABLE_UV
 ENABLE_RUST=$ENABLE_RUST
 ENABLE_GO=$ENABLE_GO
 ENABLE_DENO=$ENABLE_DENO
+ENABLE_CPP_TOOLCHAIN=$ENABLE_CPP_TOOLCHAIN
+ENABLE_ZSH=$ENABLE_ZSH
+ENABLE_FISH=$ENABLE_FISH
+ENABLE_NEOVIM=$ENABLE_NEOVIM
+ENABLE_MICRO=$ENABLE_MICRO
+ENABLE_HELIX=$ENABLE_HELIX
+ENABLE_WEB_TOOLING=$ENABLE_WEB_TOOLING
+ENABLE_POSTGRES_CLIENT=$ENABLE_POSTGRES_CLIENT
 DB_ENGINE=$DB_ENGINE
 DB_ENGINE_IMAGE=$DB_ENGINE_IMAGE
+REDIS_ENGINE_IMAGE=$REDIS_ENGINE_IMAGE
 NODE_VERSION=$NODE_VERSION
 PHP_VERSION=$PHP_VERSION
 JAVA_VERSION=$JAVA_VERSION
@@ -97,6 +119,8 @@ EOF
     set_env_var "ENABLE_PLAYWRIGHT" "$ENABLE_PLAYWRIGHT"
     set_env_var "ENABLE_PHP" "$ENABLE_PHP"
     set_env_var "ENABLE_MYSQL" "$ENABLE_MYSQL"
+    set_env_var "ENABLE_POSTGRES" "$ENABLE_POSTGRES"
+    set_env_var "ENABLE_MONGO" "$ENABLE_MONGO"
     set_env_var "ENABLE_REDIS" "$ENABLE_REDIS"
     set_env_var "ENABLE_FIREBASE" "$ENABLE_FIREBASE"
     set_env_var "ENABLE_DEV_TOOLS" "$ENABLE_DEV_TOOLS"
@@ -106,8 +130,17 @@ EOF
     set_env_var "ENABLE_RUST" "$ENABLE_RUST"
     set_env_var "ENABLE_GO" "$ENABLE_GO"
     set_env_var "ENABLE_DENO" "$ENABLE_DENO"
+    set_env_var "ENABLE_CPP_TOOLCHAIN" "$ENABLE_CPP_TOOLCHAIN"
+    set_env_var "ENABLE_ZSH" "$ENABLE_ZSH"
+    set_env_var "ENABLE_FISH" "$ENABLE_FISH"
+    set_env_var "ENABLE_NEOVIM" "$ENABLE_NEOVIM"
+    set_env_var "ENABLE_MICRO" "$ENABLE_MICRO"
+    set_env_var "ENABLE_HELIX" "$ENABLE_HELIX"
+    set_env_var "ENABLE_WEB_TOOLING" "$ENABLE_WEB_TOOLING"
+    set_env_var "ENABLE_POSTGRES_CLIENT" "$ENABLE_POSTGRES_CLIENT"
     set_env_var "DB_ENGINE" "$DB_ENGINE"
     set_env_var "DB_ENGINE_IMAGE" "$DB_ENGINE_IMAGE"
+    set_env_var "REDIS_ENGINE_IMAGE" "$REDIS_ENGINE_IMAGE"
     set_env_var "NODE_VERSION" "$NODE_VERSION"
     set_env_var "PHP_VERSION" "$PHP_VERSION"
     set_env_var "JAVA_VERSION" "$JAVA_VERSION"
@@ -116,35 +149,86 @@ EOF
     PROFILES="default"
     if [ "$ENABLE_MYSQL" = "true" ]; then PROFILES="${PROFILES},mysql"; fi
     if [ "$ENABLE_REDIS" = "true" ]; then PROFILES="${PROFILES},redis"; fi
+    if [ "$ENABLE_POSTGRES" = "true" ]; then PROFILES="${PROFILES},postgres"; fi
+    if [ "$ENABLE_MONGO" = "true" ]; then PROFILES="${PROFILES},mongo"; fi
     set_env_var "COMPOSE_PROFILES" "$PROFILES"
 
     echo -e "${GREEN}[✓] Configuration saved to ${CONF_FILE} and ${ENV_FILE}${NC}"
 }
 
-# Interactive Database Engine Choice Helper
-select_db_engine() {
+# Database & Cache Selection Menu
+select_db_engines() {
     show_banner
-    echo -e "${BOLD}🗄️ Choose Relational Database Engine${NC}"
-    echo -e "Both MySQL 8.4 and MariaDB 11.4 run on port 3306 and work seamlessly with phpMyAdmin."
+    echo -e "${BOLD}🗄️ Database & Cache Service Options${NC}"
     echo ""
-    echo -e "  ${GREEN}${BOLD}[1] 🐬 MySQL 8.4 LTS (Official Default - Recommended)${NC}"
-    echo -e "  ${CYAN}[2] 🦭 MariaDB 11.4 LTS (Open-Source Fork)${NC}"
-    echo ""
-    read -p "Select database engine [1-2]: " db_choice
+
+    echo -e "${BOLD}1. Relational Database (Port 3306):${NC}"
+    echo -e "   [1] 🐬 MySQL 8.4 LTS (${GREEN}Recommended Default${NC})"
+    echo -e "   [2] 🦭 MariaDB 11.4 LTS (Open-Source Fork)"
+    read -p "Select MySQL engine [1-2, Enter=1]: " db_choice
     case "$db_choice" in
-        2)
-            DB_ENGINE="mariadb"
-            DB_ENGINE_IMAGE="mariadb:11.4"
-            echo -e "${GREEN}  ✓ Selected MariaDB 11.4 LTS${NC}"
-            ;;
-        *)
-            DB_ENGINE="mysql"
-            DB_ENGINE_IMAGE="mysql:8.4"
-            echo -e "${GREEN}  ✓ Selected MySQL 8.4 LTS (Default)${NC}"
-            ;;
+        2) DB_ENGINE="mariadb"; DB_ENGINE_IMAGE="mariadb:11.4" ;;
+        *) DB_ENGINE="mysql"; DB_ENGINE_IMAGE="mysql:8.4" ;;
     esac
+
+    echo ""
+    echo -e "${BOLD}2. In-Memory Cache Engine (Port 6379):${NC}"
+    echo -e "   [1] ⚡ Redis 8 Alpine (${GREEN}Recommended Default${NC})"
+    echo -e "   [2] 🍃 KeyDB (Multithreaded Redis Alternative)"
+    read -p "Select Redis engine [1-2, Enter=1]: " redis_choice
+    case "$redis_choice" in
+        2) REDIS_ENGINE_IMAGE="eqalpha/keydb:latest" ;;
+        *) REDIS_ENGINE_IMAGE="redis:8-alpine" ;;
+    esac
+
+    echo ""
+    echo -e "${BOLD}3. PostgreSQL 17 + pgAdmin 4 Container (Port 5432 / 8088):${NC}"
+    read -p "Enable PostgreSQL container service? (y/N): " pg_choice
+    case "$pg_choice" in
+        [yY]*) ENABLE_POSTGRES=true ;;
+        *) ENABLE_POSTGRES=false ;;
+    esac
+
+    echo ""
+    echo -e "${BOLD}4. MongoDB 8 + Mongo Express Container (Port 27017 / 8089):${NC}"
+    read -p "Enable MongoDB container service? (y/N): " mongo_choice
+    case "$mongo_choice" in
+        [yY]*) ENABLE_MONGO=true ;;
+        *) ENABLE_MONGO=false ;;
+    esac
+
     save_config
-    sleep 1
+    echo -e "${GREEN}[✓] Database & Cache configuration updated!${NC}"
+    sleep 2
+}
+
+# Shells & Editors Customizer
+select_shells_editors() {
+    show_banner
+    echo -e "${BOLD}💻 Shells & Terminal Text Editors Selection${NC}"
+    echo ""
+
+    echo -e "${BOLD}1. Command Shells:${NC}"
+    read -p "Install Zsh + Starship prompt? (Y/n): " zsh_c
+    case "$zsh_c" in [nN]*) ENABLE_ZSH=false ;; *) ENABLE_ZSH=true ;; esac
+
+    read -p "Install Fish Shell? (y/N): " fish_c
+    case "$fish_c" in [yY]*) ENABLE_FISH=true ;; *) ENABLE_FISH=false ;; esac
+
+    echo ""
+    echo -e "${BOLD}2. Terminal Text Editors & IDEs:${NC}"
+    read -p "Install Neovim + Vim? (Y/n): " nvim_c
+    case "$nvim_c" in [nN]*) ENABLE_NEOVIM=false ;; *) ENABLE_NEOVIM=true ;; esac
+
+    read -p "Install Micro Editor? (Y/n): " micro_c
+    case "$micro_c" in [nN]*) ENABLE_MICRO=false ;; *) ENABLE_MICRO=true ;; esac
+
+    read -p "Install Helix Editor? (y/N): " helix_c
+    case "$helix_c" in [yY]*) ENABLE_HELIX=true ;; *) ENABLE_HELIX=false ;; esac
+
+    save_config
+    echo -e "${GREEN}[✓] Shells and Editors updated!${NC}"
+    sleep 2
 }
 
 # Interactive Stack Version Customizer
@@ -241,7 +325,7 @@ show_summary() {
     echo -e "${CYAN}------------------------------------------------------------------------${NC}"
     echo -e "${BOLD}               CURRENT DEVBOX COMPONENT CONFIGURATION                   ${NC}"
     echo -e "${CYAN}------------------------------------------------------------------------${NC}"
-    printf "  %-35s | %-20s\n" "Component / Stack Choice" "Status / Selection"
+    printf "  %-35s | %-20s\n" "Component / Category" "Status / Selection"
     echo -e "${CYAN}------------------------------------------------------------------------${NC}"
     
     print_row() {
@@ -257,23 +341,35 @@ show_summary() {
     print_row "🤖 20+ AI Agent CLIs (Claude, Kilo, etc)" "$ENABLE_AI_AGENTS"
     print_row "📱 Mobile Dev (Flutter + Android SDK)" "$ENABLE_FLUTTER_ANDROID"
     print_row "🎭 Browser Testing (Chromium + Playwright)" "$ENABLE_PLAYWRIGHT"
-    print_row "🐘 PHP & Ecosystem" "$ENABLE_PHP"
+    print_row "🐘 PHP Engine" "$ENABLE_PHP"
     if [ "$ENABLE_PHP" = "true" ]; then
         printf "  %-35s | ${CYAN}%-20s${NC}\n" "   ├─ PHP Version" "[PHP $PHP_VERSION]"
         print_row "   └─ Composer Package Manager" "$ENABLE_COMPOSER"
     fi
     printf "  %-35s | ${CYAN}%-20s${NC}\n" "🟢 Node.js Runtime Version" "[Node.js $NODE_VERSION LTS]"
+    print_row "🌐 Web Scaffolding (Astro, Next, Vite)" "$ENABLE_WEB_TOOLING"
     print_row "🍞 Bun JS/TS Runtime & PM" "$ENABLE_BUN"
     print_row "⚡ uv Python Package Manager" "$ENABLE_UV"
     print_row "🦀 Rust Toolchain (cargo, rustc)" "$ENABLE_RUST"
     print_row "🐹 Go Language (Golang)" "$ENABLE_GO"
     print_row "🦕 Deno TS/JS Runtime" "$ENABLE_DENO"
+    print_row "🛠️ C/C++ Clang 18 & CMake Toolchain" "$ENABLE_CPP_TOOLCHAIN"
     printf "  %-35s | ${CYAN}%-20s${NC}\n" "☕ Java JDK Version" "[Java $JAVA_VERSION JDK]"
-    print_row "🐬 Relational Database Container" "$ENABLE_MYSQL"
+    print_row "🐚 Zsh + Starship Prompt" "$ENABLE_ZSH"
+    print_row "🐟 Fish Shell" "$ENABLE_FISH"
+    print_row "📝 Neovim & Vim Text Editor" "$ENABLE_NEOVIM"
+    print_row "✏️ Micro Text Editor" "$ENABLE_MICRO"
+    print_row "🛸 Helix Editor" "$ENABLE_HELIX"
+    print_row "🐬 MySQL / MariaDB Database" "$ENABLE_MYSQL"
     if [ "$ENABLE_MYSQL" = "true" ]; then
-        printf "  %-35s | ${CYAN}%-20s${NC}\n" "   └─ Engine Choice" "[$DB_ENGINE_IMAGE]"
+        printf "  %-35s | ${CYAN}%-20s${NC}\n" "   └─ DB Engine Image" "[$DB_ENGINE_IMAGE]"
     fi
-    print_row "⚡ Redis 8 Cache + Redis Commander" "$ENABLE_REDIS"
+    print_row "🐘 PostgreSQL 17 + pgAdmin 4" "$ENABLE_POSTGRES"
+    print_row "🍃 MongoDB 8 + Mongo Express" "$ENABLE_MONGO"
+    print_row "⚡ Redis / KeyDB Cache Container" "$ENABLE_REDIS"
+    if [ "$ENABLE_REDIS" = "true" ]; then
+        printf "  %-35s | ${CYAN}%-20s${NC}\n" "   └─ Cache Engine Image" "[$REDIS_ENGINE_IMAGE]"
+    fi
     print_row "🔥 Firebase CLI & Emulator Suite" "$ENABLE_FIREBASE"
     print_row "🧰 Dev TUI Tools (lazygit, bat, eza)" "$ENABLE_DEV_TOOLS"
     echo -e "${CYAN}------------------------------------------------------------------------${NC}"
@@ -287,6 +383,8 @@ install_all() {
     ENABLE_PLAYWRIGHT=true
     ENABLE_PHP=true
     ENABLE_MYSQL=true
+    ENABLE_POSTGRES=true
+    ENABLE_MONGO=true
     ENABLE_REDIS=true
     ENABLE_FIREBASE=true
     ENABLE_DEV_TOOLS=true
@@ -296,13 +394,22 @@ install_all() {
     ENABLE_RUST=true
     ENABLE_GO=true
     ENABLE_DENO=true
+    ENABLE_CPP_TOOLCHAIN=true
+    ENABLE_ZSH=true
+    ENABLE_FISH=true
+    ENABLE_NEOVIM=true
+    ENABLE_MICRO=true
+    ENABLE_HELIX=true
+    ENABLE_WEB_TOOLING=true
+    ENABLE_POSTGRES_CLIENT=true
     DB_ENGINE="mysql"
     DB_ENGINE_IMAGE="mysql:8.4"
+    REDIS_ENGINE_IMAGE="redis:8-alpine"
     NODE_VERSION="24"
     PHP_VERSION="8.5"
     JAVA_VERSION="21"
     save_config
-    echo -e "${GREEN}${BOLD}[🚀] FULL SUPERCHARGED SUITE ENABLED! (Recommended defaults active).${NC}"
+    echo -e "${GREEN}${BOLD}[🚀] FULL SUPERCHARGED SUITE ENABLED! (All components active).${NC}"
 }
 
 # Minimal Preset
@@ -312,6 +419,8 @@ install_minimal() {
     ENABLE_PLAYWRIGHT=false
     ENABLE_PHP=false
     ENABLE_MYSQL=false
+    ENABLE_POSTGRES=false
+    ENABLE_MONGO=false
     ENABLE_REDIS=false
     ENABLE_FIREBASE=false
     ENABLE_DEV_TOOLS=true
@@ -321,34 +430,52 @@ install_minimal() {
     ENABLE_RUST=false
     ENABLE_GO=false
     ENABLE_DENO=false
+    ENABLE_CPP_TOOLCHAIN=false
+    ENABLE_ZSH=true
+    ENABLE_FISH=false
+    ENABLE_NEOVIM=true
+    ENABLE_MICRO=true
+    ENABLE_HELIX=false
+    ENABLE_WEB_TOOLING=true
+    ENABLE_POSTGRES_CLIENT=false
     DB_ENGINE="mysql"
     DB_ENGINE_IMAGE="mysql:8.4"
+    REDIS_ENGINE_IMAGE="redis:8-alpine"
     NODE_VERSION="24"
     PHP_VERSION="8.5"
     JAVA_VERSION="21"
     save_config
-    echo -e "${YELLOW}[⚡] MINIMAL CORE SUITE ENABLED! (AI Agents + Node 24 + Bun + UV + VS Code Web).${NC}"
+    echo -e "${YELLOW}[⚡] MINIMAL CORE SUITE ENABLED! (AI Agents + Node 24 + Bun + UV + Zsh + Neovim + VS Code Web).${NC}"
 }
 
 # Interactive Whiptail Checklist Menu
 custom_whiptail_menu() {
     local CHOICE
     CHOICE=$(whiptail --title "Mayanktaker Devbox Custom Component Selection" \
-        --checklist "Use Spacebar to toggle items ON/OFF, then press Enter:" 22 78 12 \
+        --checklist "Use Spacebar to toggle items ON/OFF, then press Enter:" 24 82 16 \
         "AI_AGENTS" "20+ AI Agent CLIs (Claude, Kilo, Gemini, Devin, etc)" $([ "$ENABLE_AI_AGENTS" = "true" ] && echo "ON" || echo "OFF") \
         "FLUTTER_ANDROID" "Flutter SDK, Dart & Android SDK API 35" $([ "$ENABLE_FLUTTER_ANDROID" = "true" ] && echo "ON" || echo "OFF") \
         "PLAYWRIGHT" "Chromium & Playwright Browser Automation" $([ "$ENABLE_PLAYWRIGHT" = "true" ] && echo "ON" || echo "OFF") \
-        "PHP" "PHP & Composer Ecosystem" $([ "$ENABLE_PHP" = "true" ] && echo "ON" || echo "OFF") \
+        "PHP" "PHP Engine & Extensions" $([ "$ENABLE_PHP" = "true" ] && echo "ON" || echo "OFF") \
         "COMPOSER" "Composer PHP Package Manager" $([ "$ENABLE_COMPOSER" = "true" ] && echo "ON" || echo "OFF") \
         "BUN" "Bun Fast JS/TS Runtime & PM" $([ "$ENABLE_BUN" = "true" ] && echo "ON" || echo "OFF") \
         "UV" "uv Fast Python Package Manager" $([ "$ENABLE_UV" = "true" ] && echo "ON" || echo "OFF") \
         "RUST" "Rust Toolchain (cargo, rustc, rustup)" $([ "$ENABLE_RUST" = "true" ] && echo "ON" || echo "OFF") \
-        "GO" "Go Language (Golang)" $([ "$ENABLE_GO" = "true" ] && echo "ON" || echo "OFF") \
+        "GO" "Go Language (Golang 1.23)" $([ "$ENABLE_GO" = "true" ] && echo "ON" || echo "OFF") \
         "DENO" "Deno TS/JS Runtime" $([ "$ENABLE_DENO" = "true" ] && echo "ON" || echo "OFF") \
-        "MYSQL" "Relational Database Container + phpMyAdmin" $([ "$ENABLE_MYSQL" = "true" ] && echo "ON" || echo "OFF") \
-        "REDIS" "Redis 8 Cache Container + Redis Commander" $([ "$ENABLE_REDIS" = "true" ] && echo "ON" || echo "OFF") \
+        "CPP_TOOLCHAIN" "C/C++ Clang 18, LLVM, CMake & GDB" $([ "$ENABLE_CPP_TOOLCHAIN" = "true" ] && echo "ON" || echo "OFF") \
+        "ZSH" "Zsh Shell + Starship Prompt" $([ "$ENABLE_ZSH" = "true" ] && echo "ON" || echo "OFF") \
+        "FISH" "Fish Shell" $([ "$ENABLE_FISH" = "true" ] && echo "ON" || echo "OFF") \
+        "NEOVIM" "Neovim & Vim Text Editor" $([ "$ENABLE_NEOVIM" = "true" ] && echo "ON" || echo "OFF") \
+        "MICRO" "Micro Text Editor" $([ "$ENABLE_MICRO" = "true" ] && echo "ON" || echo "OFF") \
+        "HELIX" "Helix Modal Text Editor" $([ "$ENABLE_HELIX" = "true" ] && echo "ON" || echo "OFF") \
+        "WEB_TOOLING" "Astro, Next.js, Vite, Tailwind Scaffolding" $([ "$ENABLE_WEB_TOOLING" = "true" ] && echo "ON" || echo "OFF") \
+        "MYSQL" "MySQL / MariaDB Container + phpMyAdmin" $([ "$ENABLE_MYSQL" = "true" ] && echo "ON" || echo "OFF") \
+        "POSTGRES" "PostgreSQL 17 Container + pgAdmin 4" $([ "$ENABLE_POSTGRES" = "true" ] && echo "ON" || echo "OFF") \
+        "MONGO" "MongoDB 8 Container + Mongo Express" $([ "$ENABLE_MONGO" = "true" ] && echo "ON" || echo "OFF") \
+        "REDIS" "Redis / KeyDB Cache Container + Redis Commander" $([ "$ENABLE_REDIS" = "true" ] && echo "ON" || echo "OFF") \
         "FIREBASE" "Firebase CLI & Local Emulator Suite" $([ "$ENABLE_FIREBASE" = "true" ] && echo "ON" || echo "OFF") \
-        "DEV_TOOLS" "Developer Productivity TUI Tools (lazygit, bat, etc)" $([ "$ENABLE_DEV_TOOLS" = "true" ] && echo "ON" || echo "OFF") \
+        "DEV_TOOLS" "Developer TUI Tools (lazygit, bat, eza, etc)" $([ "$ENABLE_DEV_TOOLS" = "true" ] && echo "ON" || echo "OFF") \
         3>&1 1>&2 2>&3) || return
 
     ENABLE_AI_AGENTS=false
@@ -361,7 +488,16 @@ custom_whiptail_menu() {
     ENABLE_RUST=false
     ENABLE_GO=false
     ENABLE_DENO=false
+    ENABLE_CPP_TOOLCHAIN=false
+    ENABLE_ZSH=false
+    ENABLE_FISH=false
+    ENABLE_NEOVIM=false
+    ENABLE_MICRO=false
+    ENABLE_HELIX=false
+    ENABLE_WEB_TOOLING=false
     ENABLE_MYSQL=false
+    ENABLE_POSTGRES=false
+    ENABLE_MONGO=false
     ENABLE_REDIS=false
     ENABLE_FIREBASE=false
     ENABLE_DEV_TOOLS=false
@@ -378,7 +514,16 @@ custom_whiptail_menu() {
             RUST) ENABLE_RUST=true ;;
             GO) ENABLE_GO=true ;;
             DENO) ENABLE_DENO=true ;;
+            CPP_TOOLCHAIN) ENABLE_CPP_TOOLCHAIN=true ;;
+            ZSH) ENABLE_ZSH=true ;;
+            FISH) ENABLE_FISH=true ;;
+            NEOVIM) ENABLE_NEOVIM=true ;;
+            MICRO) ENABLE_MICRO=true ;;
+            HELIX) ENABLE_HELIX=true ;;
+            WEB_TOOLING) ENABLE_WEB_TOOLING=true ;;
             MYSQL) ENABLE_MYSQL=true ;;
+            POSTGRES) ENABLE_POSTGRES=true ;;
+            MONGO) ENABLE_MONGO=true ;;
             REDIS) ENABLE_REDIS=true ;;
             FIREBASE) ENABLE_FIREBASE=true ;;
             DEV_TOOLS) ENABLE_DEV_TOOLS=true ;;
@@ -386,65 +531,6 @@ custom_whiptail_menu() {
     done
 
     save_config
-}
-
-# CLI Terminal Custom Menu
-custom_cli_menu() {
-    toggle_var() {
-        local name="$1"
-        eval "local val=\$$name"
-        if [ "$val" = "true" ]; then
-            eval "$name=false"
-        else
-            eval "$name=true"
-        fi
-    }
-
-    while true; do
-        show_banner
-        show_summary
-        echo -e "${BOLD}Select a component number to toggle, 'V' for Versions, 'D' for DB Engine, or 'S' to Save & Exit:${NC}"
-        echo "  [1] Toggle AI Agent CLIs"
-        echo "  [2] Toggle Mobile Dev (Flutter & Android SDK)"
-        echo "  [3] Toggle Browser Testing (Chromium & Playwright)"
-        echo "  [4] Toggle PHP & Composer"
-        echo "  [5] Toggle Bun JS/TS Runtime"
-        echo "  [6] Toggle uv Python Package Manager"
-        echo "  [7] Toggle Rust Toolchain (cargo, rustc)"
-        echo "  [8] Toggle Go Language (Golang)"
-        echo "  [9] Toggle Deno Runtime"
-        echo " [10] Toggle Relational Database Container + phpMyAdmin"
-        echo " [11] Toggle Redis 8 Cache + Redis Commander"
-        echo " [12] Toggle Firebase CLI & Emulators"
-        echo " [13] Toggle Dev TUI Tools (lazygit, bat, etc)"
-        echo "  [V] Customize Stack Runtime Versions (Node, PHP, Java)"
-        echo "  [D] Change Database Engine (MySQL 8.4 vs MariaDB 11.4)"
-        echo "  [A] Enable ALL Components"
-        echo "  [S] Save & Finish"
-        echo ""
-        read -p "Enter choice [1-13, V, D, A, S]: " input_choice
-
-        case "$input_choice" in
-            1) toggle_var "ENABLE_AI_AGENTS" ;;
-            2) toggle_var "ENABLE_FLUTTER_ANDROID" ;;
-            3) toggle_var "ENABLE_PLAYWRIGHT" ;;
-            4) toggle_var "ENABLE_PHP" ;;
-            5) toggle_var "ENABLE_BUN" ;;
-            6) toggle_var "ENABLE_UV" ;;
-            7) toggle_var "ENABLE_RUST" ;;
-            8) toggle_var "ENABLE_GO" ;;
-            9) toggle_var "ENABLE_DENO" ;;
-            10) toggle_var "ENABLE_MYSQL" ;;
-            11) toggle_var "ENABLE_REDIS" ;;
-            12) toggle_var "ENABLE_FIREBASE" ;;
-            13) toggle_var "ENABLE_DEV_TOOLS" ;;
-            [vV]) select_stack_versions ;;
-            [dD]) select_db_engine ;;
-            [aA]) install_all ; break ;;
-            [sS]) save_config ; break ;;
-            *) echo -e "${RED}Invalid option.${NC}" ; sleep 1 ;;
-        esac
-    done
 }
 
 # Main Wizard Menu Router
@@ -455,14 +541,15 @@ run_wizard() {
 
     echo -e "${BOLD}Choose a Setup Wizard Option:${NC}"
     echo -e "  ${GREEN}${BOLD}[1] 🚀 INSTALL ALL (Full Supercharged Suite - Recommended Default)${NC}"
-    echo -e "  ${CYAN}[2] 🎛️  Custom Selection (Toggle components ON/OFF)${NC}"
+    echo -e "  ${CYAN}[2] 🎛️  Custom Selection (Toggle components ON/OFF via checklist)${NC}"
     echo -e "  ${YELLOW}[3] ⚡ Minimal Suite (Core AI Agents + Node 24 + Bun + UV + VS Code Web)${NC}"
     echo -e "  ${CYAN}[4] ⚙️ Customize Stack Versions (Node $NODE_VERSION, PHP $PHP_VERSION, Java $JAVA_VERSION)${NC}"
-    echo -e "  ${CYAN}[5] 🗄️ Select DB Engine (Current: $DB_ENGINE_IMAGE)${NC}"
-    echo -e "  ${CYAN}[6] 🔑 Configure API Keys (.env helper)${NC}"
-    echo -e "  [7] 🚪 Exit without changes"
+    echo -e "  ${CYAN}[5] 🗄️ Database & Cache Options (MySQL/MariaDB, PostgreSQL, MongoDB, Redis/KeyDB)${NC}"
+    echo -e "  ${CYAN}[6] 💻 Shells & Editors (Zsh, Fish, Neovim/Vim, Micro, Helix)${NC}"
+    echo -e "  ${CYAN}[7] 🔑 Configure API Keys (.env helper)${NC}"
+    echo -e "  [8] 🚪 Exit without changes"
     echo ""
-    read -p "Select option [1-7]: " main_choice
+    read -p "Select option [1-8]: " main_choice
 
     case "$main_choice" in
         1)
@@ -472,7 +559,8 @@ run_wizard() {
             if [ -t 0 ] && command -v whiptail >/dev/null 2>&1; then
                 custom_whiptail_menu
             else
-                custom_cli_menu
+                echo -e "${YELLOW}Whiptail GUI menu active. Running checklist...${NC}"
+                custom_whiptail_menu
             fi
             ;;
         3)
@@ -484,16 +572,21 @@ run_wizard() {
             return
             ;;
         5)
-            select_db_engine
+            select_db_engines
             run_wizard
             return
             ;;
         6)
-            configure_keys
+            select_shells_editors
             run_wizard
             return
             ;;
         7)
+            configure_keys
+            run_wizard
+            return
+            ;;
+        8)
             echo -e "${YELLOW}Exited without changing configuration.${NC}"
             exit 0
             ;;

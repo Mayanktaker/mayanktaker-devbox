@@ -84,10 +84,10 @@ case "$1" in
         echo -e "${CYAN}    - noVNC GUI Web   : http://localhost:6080${NC}"
         echo -e "${CYAN}    - phpMyAdmin      : http://localhost:8086${NC}"
         echo -e "${CYAN}    - Redis Commander : http://localhost:8087${NC}"
+        echo -e "${CYAN}    - pgAdmin 4 UI    : http://localhost:8088${NC}"
+        echo -e "${CYAN}    - Mongo Express UI: http://localhost:8089${NC}"
         echo -e "${CYAN}    - Firebase UI     : http://localhost:4000${NC}"
         echo -e "${CYAN}    - Agent Server    : http://localhost:8081${NC}"
-        echo -e "${CYAN}    - MySQL DB        : localhost:3306${NC}"
-        echo -e "${CYAN}    - Redis Cache     : localhost:6379${NC}"
         ;;
     down)
         show_banner
@@ -133,6 +133,16 @@ case "$1" in
         echo -e "${GREEN}[+] Redis Commander Visual Web UI:${NC}"
         echo -e "${CYAN}    👉 http://localhost:8087${NC}"
         ;;
+    pgadmin)
+        show_banner
+        echo -e "${GREEN}[+] pgAdmin 4 Visual PostgreSQL Dashboard:${NC}"
+        echo -e "${CYAN}    👉 http://localhost:8088${NC}"
+        ;;
+    mongo-ui)
+        show_banner
+        echo -e "${GREEN}[+] Mongo Express Visual MongoDB Dashboard:${NC}"
+        echo -e "${CYAN}    👉 http://localhost:8089${NC}"
+        ;;
     firebase|emulators)
         show_banner
         echo -e "${GREEN}[+] Firebase Local Emulator Suite UI:${NC}"
@@ -142,6 +152,16 @@ case "$1" in
         show_banner
         echo -e "${GREEN}[+] Connecting to MySQL Database...${NC}"
         docker compose exec mysql-db mysql -u root -psecret sandbox_db
+        ;;
+    pg)
+        show_banner
+        echo -e "${GREEN}[+] Connecting to PostgreSQL Database...${NC}"
+        docker compose exec postgres-db psql -U postgres sandbox_db
+        ;;
+    mongo)
+        show_banner
+        echo -e "${GREEN}[+] Connecting to MongoDB Shell...${NC}"
+        docker compose exec mongo-db mongosh -u root -p secret
         ;;
     redis)
         show_banner
@@ -169,8 +189,8 @@ case "$1" in
         docker compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
         echo ""
         echo -e "${CYAN}[i] Individual service health:${NC}"
-        for svc in devbox mysql-db redis-cache; do
-            STATUS=$(docker inspect --format='{{.State.Health.Status}}' $svc 2>/dev/null || echo "no healthcheck")
+        for svc in devbox mysql-db redis-cache postgres-db mongo-db; do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' $svc 2>/dev/null || echo "not running / no healthcheck")
             echo -e "    ${svc}: ${STATUS}"
         done
         ;;
@@ -215,8 +235,12 @@ case "$1" in
         echo "  gui            noVNC GUI Viewer URL (http://localhost:6080)"
         echo "  pma            phpMyAdmin URL (http://localhost:8086)"
         echo "  redis-ui       Redis Commander URL (http://localhost:8087)"
+        echo "  pgadmin        pgAdmin 4 PostgreSQL UI URL (http://localhost:8088)"
+        echo "  mongo-ui       Mongo Express MongoDB UI URL (http://localhost:8089)"
         echo "  firebase       Firebase Emulator UI URL (http://localhost:4000)"
         echo "  db             Open MySQL database terminal"
+        echo "  pg             Open PostgreSQL database terminal"
+        echo "  mongo          Open MongoDB terminal"
         echo "  redis          Open Redis Cache CLI terminal"
         echo "  backup         Create database dump backup"
         echo "  auto-backup    Configure daily 2:00 AM cron backup"

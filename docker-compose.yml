@@ -25,6 +25,14 @@ services:
         INSTALL_RUST: ${ENABLE_RUST:-true}
         INSTALL_GO: ${ENABLE_GO:-false}
         INSTALL_DENO: ${ENABLE_DENO:-false}
+        INSTALL_CPP_TOOLCHAIN: ${ENABLE_CPP_TOOLCHAIN:-false}
+        INSTALL_ZSH: ${ENABLE_ZSH:-true}
+        INSTALL_FISH: ${ENABLE_FISH:-false}
+        INSTALL_NEOVIM: ${ENABLE_NEOVIM:-true}
+        INSTALL_MICRO: ${ENABLE_MICRO:-true}
+        INSTALL_HELIX: ${ENABLE_HELIX:-false}
+        INSTALL_WEB_TOOLING: ${ENABLE_WEB_TOOLING:-true}
+        INSTALL_POSTGRES_CLIENT: ${ENABLE_POSTGRES_CLIENT:-true}
     container_name: devbox
     hostname: devbox
     restart: unless-stopped
@@ -61,6 +69,8 @@ services:
       - MYSQL_PORT=3306
       - MYSQL_USER=${MYSQL_USER:-root}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-secret}
+      - POSTGRES_HOST=postgres-db
+      - POSTGRES_PORT=5432
       - REDIS_HOST=redis-cache
       - REDIS_PORT=6379
       - ANDROID_HOME=/opt/android-sdk
@@ -105,9 +115,9 @@ services:
         max-size: "50m"
         max-file: "3"
 
-  # ── Redis 8 In-Memory Cache Service ──
+  # ── Redis / KeyDB In-Memory Cache Service ──
   redis-cache:
-    image: redis:8-alpine
+    image: ${REDIS_ENGINE_IMAGE:-redis:8-alpine}
     container_name: redis-cache
     restart: unless-stopped
     command: redis-server --appendonly yes
@@ -180,7 +190,7 @@ services:
         max-size: "20m"
         max-file: "3"
 
-  # ── phpMyAdmin Visual Web Management for MySQL ──
+  # ── phpMyAdmin Visual Web Management for MySQL / MariaDB ──
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
     container_name: phpmyadmin
@@ -195,6 +205,105 @@ services:
       - devbox-net
     depends_on:
       mysql-db:
+        condition: service_healthy
+
+  # ── PostgreSQL 17 Relational Database Container (Optional Service) ──
+  postgres-db:
+    image: postgres:17-alpine
+    container_name: postgres-db
+    restart: unless-stopped
+    ports:
+      - "${PG_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret}
+      POSTGRES_DB: ${POSTGRES_DB:-sandbox_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data:rw
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+    networks:
+      - devbox-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
+
+  # ── pgAdmin 4 Visual Web Management for PostgreSQL ──
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    restart: unless-stopped
+    ports:
+      - "${PGADMIN_PORT:-8088}:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@sandbox.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-secret}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin:rw
+    networks:
+      - devbox-net
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+  # ── MongoDB 8 NoSQL Document Database Container (Optional Service) ──
+  mongo-db:
+    image: mongo:8.0
+    container_name: mongo-db
+    restart: unless-stopped
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-secret}
+    volumes:
+      - mongo_data:/data/db:rw
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+    networks:
+      - devbox-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
+
+  # ── Mongo Express Visual Web Management for MongoDB ──
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    restart: unless-stopped
+    ports:
+      - "${ME_PORT:-8089}:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_USER:-root}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_PASSWORD:-secret}
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_USER:-root}:${MONGO_PASSWORD:-secret}@mongo-db:27017/
+      ME_CONFIG_BASICAUTH: "false"
+    networks:
+      - devbox-net
+    depends_on:
+      mongo-db:
         condition: service_healthy
 
 networks:
@@ -220,6 +329,12 @@ volumes:
   composer_cache:
     driver: local
   mysql_data:
+    driver: local
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  mongo_data:
     driver: local
   redis_data:
     driver: local
