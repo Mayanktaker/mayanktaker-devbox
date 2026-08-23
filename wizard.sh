@@ -35,6 +35,8 @@ load_config() {
     ENABLE_REDIS=${ENABLE_REDIS:-true}
     ENABLE_FIREBASE=${ENABLE_FIREBASE:-true}
     ENABLE_DEV_TOOLS=${ENABLE_DEV_TOOLS:-true}
+    DB_ENGINE=${DB_ENGINE:-mysql}
+    DB_ENGINE_IMAGE=${DB_ENGINE_IMAGE:-mysql:8.4}
 
     if [ -f "$CONF_FILE" ]; then
         source "$CONF_FILE"
@@ -68,6 +70,8 @@ ENABLE_MYSQL=$ENABLE_MYSQL
 ENABLE_REDIS=$ENABLE_REDIS
 ENABLE_FIREBASE=$ENABLE_FIREBASE
 ENABLE_DEV_TOOLS=$ENABLE_DEV_TOOLS
+DB_ENGINE=$DB_ENGINE
+DB_ENGINE_IMAGE=$DB_ENGINE_IMAGE
 EOF
 
     set_env_var "ENABLE_AI_AGENTS" "$ENABLE_AI_AGENTS"
@@ -78,6 +82,8 @@ EOF
     set_env_var "ENABLE_REDIS" "$ENABLE_REDIS"
     set_env_var "ENABLE_FIREBASE" "$ENABLE_FIREBASE"
     set_env_var "ENABLE_DEV_TOOLS" "$ENABLE_DEV_TOOLS"
+    set_env_var "DB_ENGINE" "$DB_ENGINE"
+    set_env_var "DB_ENGINE_IMAGE" "$DB_ENGINE_IMAGE"
 
     # Set Docker Compose profiles
     PROFILES="default"
@@ -86,6 +92,32 @@ EOF
     set_env_var "COMPOSE_PROFILES" "$PROFILES"
 
     echo -e "${GREEN}[✓] Configuration saved to ${CONF_FILE} and ${ENV_FILE}${NC}"
+}
+
+# Interactive Database Engine Choice Helper
+select_db_engine() {
+    show_banner
+    echo -e "${BOLD}🗄️ Choose Relational Database Engine${NC}"
+    echo -e "Both MySQL 8.4 and MariaDB 11.4 run on port 3306 and work seamlessly with phpMyAdmin."
+    echo ""
+    echo -e "  ${GREEN}${BOLD}[1] 🐬 MySQL 8.4 LTS (Official Default - Recommended)${NC}"
+    echo -e "  ${CYAN}[2] 🦭 MariaDB 11.4 LTS (Open-Source Fork)${NC}"
+    echo ""
+    read -p "Select database engine [1-2]: " db_choice
+    case "$db_choice" in
+        2)
+            DB_ENGINE="mariadb"
+            DB_ENGINE_IMAGE="mariadb:11.4"
+            echo -e "${GREEN}  ✓ Selected MariaDB 11.4 LTS${NC}"
+            ;;
+        *)
+            DB_ENGINE="mysql"
+            DB_ENGINE_IMAGE="mysql:8.4"
+            echo -e "${GREEN}  ✓ Selected MySQL 8.4 LTS (Default)${NC}"
+            ;;
+    esac
+    save_config
+    sleep 1
 }
 
 # Interactive API Keys Config Helper
@@ -141,16 +173,16 @@ show_summary() {
     echo -e "${CYAN}------------------------------------------------------------------------${NC}"
     echo -e "${BOLD}               CURRENT DEVBOX COMPONENT CONFIGURATION                   ${NC}"
     echo -e "${CYAN}------------------------------------------------------------------------${NC}"
-    printf "  %-35s | %-15s\n" "Component / Module" "Status"
+    printf "  %-35s | %-20s\n" "Component / Module" "Status / Selection"
     echo -e "${CYAN}------------------------------------------------------------------------${NC}"
     
     print_row() {
         local name="$1"
         local val="$2"
         if [ "$val" = "true" ]; then
-            printf "  %-35s | ${GREEN}%-15s${NC}\n" "$name" "[✓] ENABLED"
+            printf "  %-35s | ${GREEN}%-20s${NC}\n" "$name" "[✓] ENABLED"
         else
-            printf "  %-35s | ${RED}%-15s${NC}\n" "$name" "[✗] DISABLED"
+            printf "  %-35s | ${RED}%-20s${NC}\n" "$name" "[✗] DISABLED"
         fi
     }
 
@@ -158,7 +190,10 @@ show_summary() {
     print_row "📱 Mobile Dev (Flutter + Android SDK)" "$ENABLE_FLUTTER_ANDROID"
     print_row "🎭 Browser Testing (Chromium + Playwright)" "$ENABLE_PLAYWRIGHT"
     print_row "🐘 PHP 8.5 & Composer Ecosystem" "$ENABLE_PHP"
-    print_row "🐬 MySQL 8.4 Database + phpMyAdmin" "$ENABLE_MYSQL"
+    print_row "🐬 Relational Database Container" "$ENABLE_MYSQL"
+    if [ "$ENABLE_MYSQL" = "true" ]; then
+        printf "  %-35s | ${CYAN}%-20s${NC}\n" "   └─ Engine Choice" "[$DB_ENGINE_IMAGE]"
+    fi
     print_row "⚡ Redis 8 Cache + Redis Commander" "$ENABLE_REDIS"
     print_row "🔥 Firebase CLI & Emulator Suite" "$ENABLE_FIREBASE"
     print_row "🧰 Dev TUI Tools (lazygit, bat, eza)" "$ENABLE_DEV_TOOLS"
@@ -176,8 +211,10 @@ install_all() {
     ENABLE_REDIS=true
     ENABLE_FIREBASE=true
     ENABLE_DEV_TOOLS=true
+    DB_ENGINE="mysql"
+    DB_ENGINE_IMAGE="mysql:8.4"
     save_config
-    echo -e "${GREEN}${BOLD}[🚀] FULL SUPERCHARGED SUITE ENABLED! All features activated.${NC}"
+    echo -e "${GREEN}${BOLD}[🚀] FULL SUPERCHARGED SUITE ENABLED! (MySQL 8.4 LTS default).${NC}"
 }
 
 # Minimal Preset
@@ -190,6 +227,8 @@ install_minimal() {
     ENABLE_REDIS=false
     ENABLE_FIREBASE=false
     ENABLE_DEV_TOOLS=true
+    DB_ENGINE="mysql"
+    DB_ENGINE_IMAGE="mysql:8.4"
     save_config
     echo -e "${YELLOW}[⚡] MINIMAL CORE SUITE ENABLED! (AI Agents + Node 24 + VS Code Web).${NC}"
 }
@@ -203,7 +242,7 @@ custom_whiptail_menu() {
         "FLUTTER_ANDROID" "Flutter SDK, Dart & Android SDK API 35" $([ "$ENABLE_FLUTTER_ANDROID" = "true" ] && echo "ON" || echo "OFF") \
         "PLAYWRIGHT" "Chromium & Playwright Browser Automation" $([ "$ENABLE_PLAYWRIGHT" = "true" ] && echo "ON" || echo "OFF") \
         "PHP" "PHP 8.5 & Composer Ecosystem" $([ "$ENABLE_PHP" = "true" ] && echo "ON" || echo "OFF") \
-        "MYSQL" "MySQL 8.4 Database Container + phpMyAdmin" $([ "$ENABLE_MYSQL" = "true" ] && echo "ON" || echo "OFF") \
+        "MYSQL" "Relational Database Container + phpMyAdmin" $([ "$ENABLE_MYSQL" = "true" ] && echo "ON" || echo "OFF") \
         "REDIS" "Redis 8 Cache Container + Redis Commander" $([ "$ENABLE_REDIS" = "true" ] && echo "ON" || echo "OFF") \
         "FIREBASE" "Firebase CLI & Local Emulator Suite" $([ "$ENABLE_FIREBASE" = "true" ] && echo "ON" || echo "OFF") \
         "DEV_TOOLS" "Developer Productivity TUI Tools (lazygit, bat, etc)" $([ "$ENABLE_DEV_TOOLS" = "true" ] && echo "ON" || echo "OFF") \
@@ -249,19 +288,20 @@ custom_cli_menu() {
     while true; do
         show_banner
         show_summary
-        echo -e "${BOLD}Select a component number to toggle ON/OFF, or 'S' to Save & Exit:${NC}"
+        echo -e "${BOLD}Select a component number to toggle ON/OFF, 'D' to change DB Engine, or 'S' to Save & Exit:${NC}"
         echo "  [1] Toggle AI Agent CLIs"
         echo "  [2] Toggle Mobile Dev (Flutter & Android SDK)"
         echo "  [3] Toggle Browser Testing (Chromium & Playwright)"
         echo "  [4] Toggle PHP 8.5 & Composer"
-        echo "  [5] Toggle MySQL 8.4 Database + phpMyAdmin"
+        echo "  [5] Toggle Relational Database Container + phpMyAdmin"
         echo "  [6] Toggle Redis 8 Cache + Redis Commander"
         echo "  [7] Toggle Firebase CLI & Emulators"
         echo "  [8] Toggle Dev TUI Tools (lazygit, bat, etc)"
+        echo "  [D] Change Database Engine (MySQL 8.4 vs MariaDB 11.4)"
         echo "  [A] Enable ALL Components"
         echo "  [S] Save & Finish"
         echo ""
-        read -p "Enter choice [1-8, A, S]: " input_choice
+        read -p "Enter choice [1-8, D, A, S]: " input_choice
 
         case "$input_choice" in
             1) toggle_var "ENABLE_AI_AGENTS" ;;
@@ -272,6 +312,7 @@ custom_cli_menu() {
             6) toggle_var "ENABLE_REDIS" ;;
             7) toggle_var "ENABLE_FIREBASE" ;;
             8) toggle_var "ENABLE_DEV_TOOLS" ;;
+            [dD]) select_db_engine ;;
             [aA]) install_all ; break ;;
             [sS]) save_config ; break ;;
             *) echo -e "${RED}Invalid option.${NC}" ; sleep 1 ;;
@@ -286,13 +327,14 @@ run_wizard() {
     show_summary
 
     echo -e "${BOLD}Choose a Setup Wizard Option:${NC}"
-    echo -e "  ${GREEN}${BOLD}[1] 🚀 INSTALL ALL (Full Supercharged Suite - Recommended)${NC}"
+    echo -e "  ${GREEN}${BOLD}[1] 🚀 INSTALL ALL (Full Supercharged Suite - Recommended Default)${NC}"
     echo -e "  ${CYAN}[2] 🎛️  Custom Selection (Toggle components ON/OFF)${NC}"
     echo -e "  ${YELLOW}[3] ⚡ Minimal Suite (Core AI Agents + Node 24 + VS Code Web)${NC}"
-    echo -e "  ${CYAN}[4] 🔑 Configure API Keys (.env helper)${NC}"
-    echo -e "  [5] 🚪 Exit without changes"
+    echo -e "  ${CYAN}[4] 🗄️ Select DB Engine (Current: $DB_ENGINE_IMAGE)${NC}"
+    echo -e "  ${CYAN}[5] 🔑 Configure API Keys (.env helper)${NC}"
+    echo -e "  [6] 🚪 Exit without changes"
     echo ""
-    read -p "Select option [1-5]: " main_choice
+    read -p "Select option [1-6]: " main_choice
 
     case "$main_choice" in
         1)
@@ -309,11 +351,16 @@ run_wizard() {
             install_minimal
             ;;
         4)
-            configure_keys
+            select_db_engine
             run_wizard
             return
             ;;
         5)
+            configure_keys
+            run_wizard
+            return
+            ;;
+        6)
             echo -e "${YELLOW}Exited without changing configuration.${NC}"
             exit 0
             ;;

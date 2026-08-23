@@ -140,9 +140,9 @@ services:
       redis-cache:
         condition: service_healthy
 
-  # ── MySQL 8.4 LTS Database Container ──
+  # ── Relational Database Container (MySQL 8.4 LTS default / MariaDB 11.4 LTS) ──
   mysql-db:
-    image: mysql:8.4
+    image: ${DB_ENGINE_IMAGE:-mysql:8.4}
     container_name: mysql-db
     restart: unless-stopped
     ports:
