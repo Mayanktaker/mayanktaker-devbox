@@ -309,7 +309,7 @@ RUN useradd -m -u 1000 -s /bin/bash agent && \
     mkdir -p /workspace /home/agent/.kilo /home/agent/.ssh /home/agent/.cache/composer \
              /home/agent/.config/code-server /home/agent/.config/openvscode-server /home/agent/.config/configstore \
              /home/agent/.local/share/code-server /home/agent/.local/share/openvscode-server /home/agent/.android /home/agent/.cargo && \
-    echo 'alias fb="firebase"\nalias c="claude"\nalias k="kilo"\nalias a="aider"\nalias db="mysql -u root -psecret -h mysql-db sandbox_db"\nalias pg="psql -h postgres-db -U postgres sandbox_db"\nalias r="redis-cli -h redis-cache"\nalias gs="git status"\nalias lg="lazygit"\nalias ld="lazydocker"\nalias cat="bat --paging=never"\nalias ls="eza --icons --group-directories-first"\nalias find="fd"\nalias flutter="/opt/flutter/bin/flutter"\nalias dart="/opt/flutter/bin/dart"' >> /home/agent/.bashrc && \
+    echo 'alias fb="firebase"\nalias c="claude"\nalias k="kilo"\nalias a="aider"\nalias db="mysql -u \\${MYSQL_USER:-root} -p\\${MYSQL_ROOT_PASSWORD:-secret} -h mysql-db \\${MYSQL_DATABASE:-sandbox_db}"\nalias pg="psql -h postgres-db -U \\${POSTGRES_USER:-postgres} \\${POSTGRES_DB:-sandbox_db}"\nalias r="redis-cli -h redis-cache"\nalias gs="git status"\nalias lg="lazygit"\nalias ld="lazydocker"\nalias cat="bat --paging=never"\nalias ls="eza --icons --group-directories-first"\nalias find="fd"\nalias flutter="/opt/flutter/bin/flutter"\nalias dart="/opt/flutter/bin/dart"' >> /home/agent/.bashrc && \
     chown -R agent:agent /workspace /home/agent /opt/flutter /opt/android-sdk /opt/openvscode-server 2>/dev/null || true
 
 # Switch to non-root user

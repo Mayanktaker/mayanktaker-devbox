@@ -61,7 +61,9 @@ check_permissions() {
     fi
 
     # 4. Check Wayland / X11 Host Display Status
-    if [ -n "$WAYLAND_DISPLAY" ] || [ -e "/run/user/$UID/wayland-0" ]; then
+    local current_uid
+    current_uid="${UID:-$(id -u)}"
+    if [ -n "$WAYLAND_DISPLAY" ] || [ -e "/run/user/${current_uid}/wayland-0" ]; then
         echo -e "${GREEN}  ✓ Linux Wayland Display detected (${WAYLAND_DISPLAY:-wayland-0}) — Weston & XWayland forwarding active!${NC}"
     elif [ -n "$DISPLAY" ]; then
         echo -e "${GREEN}  ✓ Linux X11 Display detected ($DISPLAY) — X11 forwarding active!${NC}"
@@ -224,17 +226,38 @@ case "$1" in
         ;;
     backup)
         show_banner
-        echo -e "${GREEN}[+] Creating database backup...${NC}"
+        echo -e "${GREEN}[+] Creating database backups...${NC}"
         mkdir -p ./backups
-        BACKUP_FILE="./backups/sandbox_db_$(date +%Y%m%d_%H%M%S).sql"
-        docker compose exec mysql-db mysqldump -u "${MYSQL_USER:-root}" -p"${MYSQL_ROOT_PASSWORD:-secret}" "${MYSQL_DATABASE:-sandbox_db}" > "$BACKUP_FILE"
-        echo -e "${GREEN}[✓] Database backed up to ${BACKUP_FILE}${NC}"
+        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+        
+        if docker compose ps --services 2>/dev/null | grep -q "mysql-db"; then
+            if [ "$(docker inspect --format='{{.State.Running}}' mysql-db 2>/dev/null)" = "true" ]; then
+                echo -e "${CYAN}  - Backing up MySQL / MariaDB...${NC}"
+                docker compose exec -T mysql-db mysqldump -u "${MYSQL_USER:-root}" -p"${MYSQL_ROOT_PASSWORD:-secret}" "${MYSQL_DATABASE:-sandbox_db}" > "./backups/mysql_${TIMESTAMP}.sql" 2>/dev/null || true
+            fi
+        fi
+
+        if docker compose ps --services 2>/dev/null | grep -q "postgres-db"; then
+            if [ "$(docker inspect --format='{{.State.Running}}' postgres-db 2>/dev/null)" = "true" ]; then
+                echo -e "${CYAN}  - Backing up PostgreSQL...${NC}"
+                docker compose exec -T postgres-db pg_dump -U "${POSTGRES_USER:-postgres}" "${POSTGRES_DB:-sandbox_db}" > "./backups/postgres_${TIMESTAMP}.sql" 2>/dev/null || true
+            fi
+        fi
+
+        if docker compose ps --services 2>/dev/null | grep -q "mongo-db"; then
+            if [ "$(docker inspect --format='{{.State.Running}}' mongo-db 2>/dev/null)" = "true" ]; then
+                echo -e "${CYAN}  - Backing up MongoDB...${NC}"
+                docker compose exec -T mongo-db mongodump -u "${MONGO_USER:-root}" -p "${MONGO_PASSWORD:-secret}" --archive --gzip > "./backups/mongo_${TIMESTAMP}.archive.gz" 2>/dev/null || true
+            fi
+        fi
+        
+        echo -e "${GREEN}[✓] Database(s) backed up to ./backups/${NC}"
         ;;
     auto-backup)
         show_banner
         echo -e "${GREEN}[+] Setting up daily 2:00 AM automatic backup...${NC}"
         mkdir -p ./backups
-        CRON_SCRIPT="$(pwd)/manage.sh backup > /dev/null 2>&1"
+        CRON_SCRIPT="\"$(pwd)/manage.sh\" backup > /dev/null 2>&1"
         (crontab -l 2>/dev/null | grep -v "manage.sh backup" ; echo "0 2 * * * $CRON_SCRIPT") | crontab -
         echo -e "${GREEN}[✓] Daily automated backup configured!${NC}"
         ;;

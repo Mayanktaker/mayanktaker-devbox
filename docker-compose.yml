@@ -78,6 +78,13 @@ services:
       - MYSQL_PORT=3306
       - MYSQL_USER=${MYSQL_USER:-root}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-secret}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-secret}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-sandbox_db}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-secret}
+      - POSTGRES_DB=${POSTGRES_DB:-sandbox_db}
+      - MONGO_USER=${MONGO_USER:-root}
+      - MONGO_PASSWORD=${MONGO_PASSWORD:-secret}
       - POSTGRES_HOST=postgres-db
       - POSTGRES_PORT=5432
       - REDIS_HOST=redis-cache
