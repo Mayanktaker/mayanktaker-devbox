@@ -18,6 +18,12 @@ If an AI goes rogue inside this sandbox, you just `./manage.sh down && ./manage.
 
 ---
 
+## 🙏 Special Thanks & Acknowledgments
+
+Special thanks to Reddit user **[u/kaas_is_leven](https://www.reddit.com/r/kilocode/comments/1vnytts/comment/p5dsj9w/)** on [r/kilocode](https://www.reddit.com/r/kilocode/) for inspiring this project! Their original suggestion on using Docker containerization to safely isolate AI coding agents laid the foundation for building this ultimate, supercharged multi-agent devbox environment.
+
+---
+
 ## 🧙‍♂️ Interactive Setup Wizard & Stack Choice
 
 Run `./manage.sh wizard` anytime to configure your devbox:
