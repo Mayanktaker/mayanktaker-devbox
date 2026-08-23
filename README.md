@@ -1,6 +1,6 @@
 # 🟢 Mayanktaker Devbox
 
-> **Skeptic-audited, production-grade Docker sandbox** for running 20+ AI coding agents, full-stack development tools, and mobile development (Flutter/Android) — all safely isolated from your host machine. Includes an **Interactive Setup Wizard** to customize stack runtimes (Node, PHP, Java, Rust, Go, Bun, uv, Deno, C/C++), shell choices (Bash, Zsh, Fish), terminal editors (Neovim/Vim, Micro, Helix), and database containers (MySQL, MariaDB, Postgres, Mongo, Redis, KeyDB)!
+> **Skeptic-audited, production-grade Docker sandbox** for running 20+ AI coding agents, full-stack development tools, and mobile development (Flutter/Android/React Native Expo/Fastlane) — all safely isolated from your host machine. Includes an **Interactive Setup Wizard** to customize stack runtimes (Node, PHP, Java, Rust, Go, Bun, uv, Deno, C/C++), shell choices (Bash, Zsh, Fish), terminal editors (Neovim/Vim, Micro, Helix), and database containers (MySQL, MariaDB, Postgres, Mongo, Redis, KeyDB)!
 
 **© [Mayanktaker Computers & Web Development](https://mayanktaker.com)**
 
@@ -29,11 +29,16 @@ Special thanks to Reddit user **[u/kaas_is_leven](https://www.reddit.com/r/kiloc
 Run `./manage.sh wizard` anytime to configure your devbox:
 
 - **🚀 Install All (Full Supercharged Suite)** — Enable everything!
-- **⚡ Minimal Suite** — Ultra-lightweight core setup (AI Agents + Node 24 + Bun + UV + Zsh + Neovim + VS Code Web)
+- **⚡ Minimal Suite** — Ultra-lightweight core setup (AI Agents + Node 24 + Expo + Bun + UV + Zsh + Neovim + VS Code Web)
 - **🎛️ Custom Component Toggles**:
   - [x] **AI Agent CLIs** (Claude, Kilo, Gemini, Antigravity, Devin, Aider, etc.)
-  - [x] **Mobile Development** (Flutter SDK, Dart, Android SDK API 35)
-  - [x] **Browser Testing & Automation** (Chromium, Playwright)
+  - [x] **Mobile Development (Flutter SDK, Dart, Android SDK API 35)**
+  - [x] **React Native Expo CLI & eas-cli (Cloud iOS/Android Builds)** ⭐
+  - [x] **Fastlane Mobile Release Automation** ⭐
+  - [x] **Kotlin Compiler (`kotlinc`)** ⭐
+  - [x] **Watchman React Native Hot Reload** ⭐
+  - [x] **Browser Testing & Automation (Chromium, Playwright)**
+  - [x] **Lighthouse Core Web Vitals & PWA Audit CLI** ⭐
   - [x] **PHP & Composer Ecosystem**
   - [x] **Bun JS/TS Runtime & Fast Package Manager**
   - [x] **uv Python Package Manager & Resolver**
@@ -90,13 +95,18 @@ cd mayanktaker-devbox
 
 ## 🧰 What's Included
 
-### Base OS, Runtimes & Compilers
+### Base OS, Runtimes & Mobile SDKs
 
 | Component | Recommended Default | Alternative Choice | Notes |
 | :--- | :--- | :--- | :--- |
 | **Ubuntu** | **26.04 LTS** "Resolute Raccoon" | — | Latest LTS (April 2026) |
 | **Node.js** | **24 LTS** ⭐ | Node 26 Current | Active LTS (Aug 2026) |
-| **PHP** | **8.5** ⭐ | PHP 8.4 | Latest stable (8.5.9) |
+| **Flutter SDK** | **Installed** ⭐ | Optional | Full SDK + Dart |
+| **Android SDK** | **API 35** ⭐ | Optional | cmdline-tools, platform-tools, build-tools |
+| **React Native Expo** | **Installed** ⭐ | Optional | `expo-cli` & `eas-cli` (Cloud iOS Builds) |
+| **Fastlane** | **Installed** ⭐ | Optional | Automated App Store & Play Store releases |
+| **Kotlin Compiler** | **Installed** ⭐ | Optional | Native Android Kotlin development |
+| **Lighthouse CLI** | **Installed** ⭐ | Optional | Web Vitals & PWA Performance Audits |
 | **Composer** | **Installed** ⭐ | Optional | PHP Package Manager |
 | **Bun** | **Installed** ⭐ | Optional | Fast JS/TS Runtime & PM |
 | **uv** | **Installed** ⭐ | Optional | Fast Python Package Resolver |

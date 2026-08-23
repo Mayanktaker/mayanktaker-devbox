@@ -1,10 +1,11 @@
 # © Mayanktaker Computers & Web Development | https://mayanktaker.com
 # Ultimate Multi-Agent Sandbox Dockerfile (Ubuntu 26.04 LTS "Resolute Raccoon")
 # Skeptic-audited & 100% Modular Stack:
-# Runtimes: Node, PHP, Java, Rust, Go, Bun, UV, Composer, Deno, C/C++ Toolchain
+# Runtimes: Node, PHP, Java, Rust, Go, Bun, UV, Composer, Deno, C/C++ Toolchain, Kotlin
+# Mobile Dev: Flutter/Android, React Native Expo CLI, Fastlane, Watchman, Android NDK
 # Shells: Bash, Zsh (+ Oh My Zsh/Starship), Fish
 # Editors: VS Code Web, Neovim/Vim, Micro, Helix
-# Tools: AI Agents, Flutter/Android, Playwright, Web Scaffolding CLIs (Next, Astro, Vite, Tailwind)
+# Web Tools: AI Agents, Playwright, Lighthouse, Web Scaffolding CLIs (Next, Astro, Vite, Tailwind)
 
 FROM ubuntu:26.04 AS base
 
@@ -14,6 +15,11 @@ ARG PHP_VERSION=8.5
 ARG JAVA_VERSION=21
 ARG INSTALL_AI_AGENTS=true
 ARG INSTALL_FLUTTER_ANDROID=true
+ARG INSTALL_EXPO=true
+ARG INSTALL_FASTLANE=true
+ARG INSTALL_KOTLIN=true
+ARG INSTALL_LIGHTHOUSE=true
+ARG INSTALL_WATCHMAN=true
 ARG INSTALL_PLAYWRIGHT=true
 ARG INSTALL_PHP=true
 ARG INSTALL_DEV_TOOLS=true
@@ -135,26 +141,40 @@ RUN if [ "$INSTALL_NEOVIM" = "true" ]; then \
       apt-get update && apt-get install -y helix && rm -rf /var/lib/apt/lists/* ; \
     fi
 
-# ── Layer 5: C/C++ Modern Systems Toolchain (Conditional) ──
+# ── Layer 5: Kotlin Compiler & Fastlane (Conditional) ──
+RUN if [ "$INSTALL_KOTLIN" = "true" ]; then \
+      apt-get update && apt-get install -y kotlin && rm -rf /var/lib/apt/lists/* ; \
+    fi && \
+    if [ "$INSTALL_FASTLANE" = "true" ]; then \
+      apt-get update && apt-get install -y ruby-full ruby-dev && \
+      gem install fastlane -N || true && \
+      rm -rf /var/lib/apt/lists/* ; \
+    fi && \
+    if [ "$INSTALL_WATCHMAN" = "true" ]; then \
+      apt-get update && apt-get install -y watchman || true && \
+      rm -rf /var/lib/apt/lists/* ; \
+    fi
+
+# ── Layer 6: C/C++ Modern Systems Toolchain (Conditional) ──
 RUN if [ "$INSTALL_CPP_TOOLCHAIN" = "true" ]; then \
       apt-get update && apt-get install -y --no-install-recommends \
       clang-18 llvm-18 gdb lldb valgrind && rm -rf /var/lib/apt/lists/* ; \
     fi
 
-# ── Layer 6: GitHub CLI ──
+# ── Layer 7: GitHub CLI ──
 RUN mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | gpg --dearmor -o /etc/apt/keyrings/githubcli-archive-keyring.gpg && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
     apt-get update && apt-get install -y gh && \
     rm -rf /var/lib/apt/lists/*
 
-# ── Layer 7: Node.js (Configurable: Node 24 LTS default) ──
+# ── Layer 8: Node.js (Configurable: Node 24 LTS default) ──
 RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_VERSION}.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
     apt-get update && apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-# ── Layer 8: PHP & Composer (Conditional on INSTALL_PHP & INSTALL_COMPOSER) ──
+# ── Layer 9: PHP & Composer (Conditional on INSTALL_PHP & INSTALL_COMPOSER) ──
 RUN if [ "$INSTALL_PHP" = "true" ]; then \
       add-apt-repository -y ppa:ondrej/php && \
       apt-get update && apt-get install -y --no-install-recommends \
@@ -164,35 +184,41 @@ RUN if [ "$INSTALL_PHP" = "true" ]; then \
       rm -rf /var/lib/apt/lists/* ; \
     fi
 
-# ── Layer 9: code-server (VS Code Web), Bun, pnpm, yarn, Deno ──
+# ── Layer 10: code-server (VS Code Web), Bun, pnpm, yarn, Deno ──
 RUN curl -fsSL https://code-server.dev/install.sh | sh
 RUN npm install -g pnpm yarn
 RUN if [ "$INSTALL_BUN" = "true" ]; then curl -fsSL https://bun.sh/install | bash ; fi
 RUN if [ "$INSTALL_DENO" = "true" ]; then curl -fsSL https://deno.land/install.sh | sh ; fi
 
-# ── Layer 10: Web & Frontend Scaffolding CLIs (Conditional) ──
-RUN if [ "$INSTALL_WEB_TOOLING" = "true" ]; then \
+# ── Layer 11: Expo CLI, React Native CLI, Lighthouse & Web Tooling ──
+RUN if [ "$INSTALL_EXPO" = "true" ]; then \
+      npm install -g expo-cli eas-cli react-native-cli || true ; \
+    fi && \
+    if [ "$INSTALL_LIGHTHOUSE" = "true" ]; then \
+      npm install -g lighthouse || true ; \
+    fi && \
+    if [ "$INSTALL_WEB_TOOLING" = "true" ]; then \
       npm install -g astro next vite turbo biome @tailwindcss/cli || true ; \
     fi
 
-# ── Layer 11: uv (Python package manager), Aider & DeepSeek harness ──
+# ── Layer 12: uv (Python package manager), Aider & DeepSeek harness ──
 RUN pip3 install --no-cache-dir --break-system-packages httpie ruff && \
     if [ "$INSTALL_UV" = "true" ]; then curl -LsSf https://astral.sh/uv/install.sh | sh ; fi && \
     if [ "$INSTALL_AI_AGENTS" = "true" ]; then \
       pip3 install --no-cache-dir --break-system-packages aider-chat lm-eval transformers ; \
     fi
 
-# ── Layer 12: Rust Toolchain (rustup, cargo, rustc) ──
+# ── Layer 13: Rust Toolchain (rustup, cargo, rustc) ──
 RUN if [ "$INSTALL_RUST" = "true" ]; then \
       curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y ; \
     fi
 
-# ── Layer 13: Go Language (Golang) ──
+# ── Layer 14: Go Language (Golang) ──
 RUN if [ "$INSTALL_GO" = "true" ]; then \
       curl -fsSL https://go.dev/dl/go1.23.0.linux-amd64.tar.gz | tar -C /usr/local -xz ; \
     fi
 
-# ── Layer 14: Flutter SDK + Dart (Conditional on INSTALL_FLUTTER_ANDROID) ──
+# ── Layer 15: Flutter SDK + Dart (Conditional on INSTALL_FLUTTER_ANDROID) ──
 RUN if [ "$INSTALL_FLUTTER_ANDROID" = "true" ]; then \
       git clone https://github.com/flutter/flutter.git -b stable --depth 1 /opt/flutter && \
       /opt/flutter/bin/flutter --disable-analytics && \
@@ -203,7 +229,7 @@ RUN if [ "$INSTALL_FLUTTER_ANDROID" = "true" ]; then \
       mkdir -p /opt/flutter ; \
     fi
 
-# ── Layer 15: Android SDK command-line tools (Conditional on INSTALL_FLUTTER_ANDROID) ──
+# ── Layer 16: Android SDK command-line tools (Conditional on INSTALL_FLUTTER_ANDROID) ──
 RUN if [ "$INSTALL_FLUTTER_ANDROID" = "true" ]; then \
       mkdir -p ${ANDROID_HOME}/cmdline-tools && \
       curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/cmdline-tools.zip && \
@@ -218,18 +244,18 @@ RUN if [ "$INSTALL_FLUTTER_ANDROID" = "true" ]; then \
       mkdir -p ${ANDROID_HOME} ; \
     fi
 
-# ── Layer 16: Playwright + Chromium browsers (Conditional on INSTALL_PLAYWRIGHT) ──
+# ── Layer 17: Playwright + Chromium browsers (Conditional on INSTALL_PLAYWRIGHT) ──
 RUN if [ "$INSTALL_PLAYWRIGHT" = "true" ]; then \
       npx playwright install --with-deps chromium || true ; \
     fi
 
-# ── Layer 17: lazygit + lazydocker TUI tools (Conditional on INSTALL_DEV_TOOLS) ──
+# ── Layer 18: lazygit + lazydocker TUI tools (Conditional on INSTALL_DEV_TOOLS) ──
 RUN if [ "$INSTALL_DEV_TOOLS" = "true" ]; then \
       curl -fsSL https://raw.githubusercontent.com/jesseduffield/lazygit/master/scripts/install_update_linux.sh | bash && \
       curl -fsSL https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | bash ; \
     fi
 
-# ── Layer 18: AI Multi-Agent CLI Tools, ORMs & Firebase (npm global) ──
+# ── Layer 19: AI Multi-Agent CLI Tools, ORMs & Firebase (npm global) ──
 RUN if [ "$INSTALL_AI_AGENTS" = "true" ]; then \
       npm install -g --allow-scripts \
       prisma drizzle-kit \
@@ -241,26 +267,26 @@ RUN if [ "$INSTALL_AI_AGENTS" = "true" ]; then \
       npm install -g firebase-tools || true ; \
     fi
 
-# ── Layer 19: Devin CLI (pip, conditional on INSTALL_AI_AGENTS) ──
+# ── Layer 20: Devin CLI (pip, conditional on INSTALL_AI_AGENTS) ──
 RUN if [ "$INSTALL_AI_AGENTS" = "true" ]; then \
       pip3 install --no-cache-dir --break-system-packages devin-cli || true ; \
     fi
 
-# ── Layer 20: Antigravity CLI (official install script, conditional on INSTALL_AI_AGENTS) ──
+# ── Layer 21: Antigravity CLI (official install script, conditional on INSTALL_AI_AGENTS) ──
 RUN if [ "$INSTALL_AI_AGENTS" = "true" ]; then \
       curl -fsSL https://antigravity.google/cli/install.sh | bash || true ; \
     fi
 
-# ── Layer 21: bat/fd symlinks ──
+# ── Layer 22: bat/fd symlinks ──
 RUN mkdir -p /usr/local/bin && \
     ln -sf /usr/bin/batcat /usr/local/bin/bat 2>/dev/null || true && \
     ln -sf /usr/bin/fdfind /usr/local/bin/fd 2>/dev/null || true
 
-# ── Layer 22: Auto-updater script ──
+# ── Layer 23: Auto-updater script ──
 RUN echo '#!/usr/bin/env bash\necho "[+] Updating installed CLI tools, Flutter & packages..."\nnpm update -g\npip3 install --upgrade httpie ruff --break-system-packages\nif [ -d "/opt/flutter/.git" ]; then /opt/flutter/bin/flutter upgrade; fi\necho "[✓] All tools updated!"' > /usr/local/bin/update-tools && \
     chmod +x /usr/local/bin/update-tools
 
-# ── Layer 23: Create non-root developer user 'agent' with passwordless sudo ──
+# ── Layer 24: Create non-root developer user 'agent' with passwordless sudo ──
 RUN useradd -m -u 1000 -s /bin/bash agent && \
     echo "agent ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
     mkdir -p /workspace /home/agent/.kilo /home/agent/.ssh /home/agent/.cache/composer \
