@@ -91,7 +91,7 @@ EOF
 # Interactive API Keys Config Helper
 configure_keys() {
     show_banner
-    echo -e "${BOLD}🔑 Configure AI Provider & Cloud API Keys (.env)${NC}"
+    echo -e "${BOLD}🔑 Configure AI Provider, Router & Cloud API Keys (.env)${NC}"
     echo -e "${CYAN}Press Enter to keep existing key value, or type a new key value.${NC}"
     echo ""
 
@@ -105,9 +105,9 @@ configure_keys() {
         eval "local current=\$$varname"
         local masked=""
         if [ -n "$current" ]; then
-            masked="[Key configured: ${current:0:6}...]"
+            masked="[Configured: ${current:0:6}...]"
         else
-            masked="[Not configured]"
+            masked="[Not set]"
         fi
         read -p "$label $masked: " input_val
         if [ -n "$input_val" ]; then
@@ -121,9 +121,14 @@ configure_keys() {
     prompt_key "OPENAI_API_KEY" "OpenAI API Key (GPT-4o/Codex)"
     prompt_key "ANTHROPIC_API_KEY" "Anthropic API Key (Claude Code)"
     prompt_key "GEMINI_API_KEY" "Google Gemini / Antigravity API Key"
+    prompt_key "OPENROUTER_API_KEY" "OpenRouter API Key"
+    prompt_key "KILO_API_KEY" "Kilo Code API Key"
+    prompt_key "OPENCODE_API_KEY" "OpenCode API Key"
     prompt_key "DEVIN_API_KEY" "Devin AI API Key"
     prompt_key "KIMI_API_KEY" "Kimi Code API Key"
     prompt_key "CURSOR_API_KEY" "Cursor API Key"
+    prompt_key "DEEPSEEK_API_KEY" "DeepSeek API Key"
+    prompt_key "MISTRAL_API_KEY" "Mistral AI API Key"
     prompt_key "GITHUB_TOKEN" "GitHub Personal Access Token"
 
     echo ""
