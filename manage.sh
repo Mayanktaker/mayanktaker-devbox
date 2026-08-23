@@ -12,6 +12,11 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
+# Load environment configuration if available
+if [ -f ".env" ]; then
+    source .env 2>/dev/null || true
+fi
+
 # Print header banner
 show_banner() {
     echo -e "${CYAN}====================================================${NC}"
@@ -25,6 +30,7 @@ check_env() {
     if [ ! -f ".env" ]; then
         echo -e "${YELLOW}[!] .env file missing. Copying from .env.example...${NC}"
         cp .env.example .env
+        source .env 2>/dev/null || true
     fi
 }
 
@@ -79,7 +85,6 @@ case "$1" in
         check_env
         echo -e "${GREEN}[+] Current API Keys Status in .env:${NC}"
         echo ""
-        source .env 2>/dev/null || true
         print_key_status() {
             local name="$1"
             eval "local val=\$$name"
@@ -123,15 +128,15 @@ case "$1" in
         echo -e "${GREEN}[+] Starting Devbox services (25GB RAM, 10 CPUs)...${NC}"
         docker compose up -d
         echo -e "${GREEN}[✓] All Devbox Web Services Running!${NC}"
-        echo -e "${CYAN}    - VS Code Web (MS) : http://localhost:8085${NC}"
-        echo -e "${CYAN}    - VSCodium Web     : http://localhost:8084 (Open-VSX Telemetry-Free)${NC}"
-        echo -e "${CYAN}    - noVNC GUI Web   : http://localhost:6080${NC}"
-        echo -e "${CYAN}    - phpMyAdmin      : http://localhost:8086${NC}"
-        echo -e "${CYAN}    - Redis Commander : http://localhost:8087${NC}"
-        echo -e "${CYAN}    - pgAdmin 4 UI    : http://localhost:8088${NC}"
-        echo -e "${CYAN}    - Mongo Express UI: http://localhost:8089${NC}"
-        echo -e "${CYAN}    - Firebase UI     : http://localhost:4000${NC}"
-        echo -e "${CYAN}    - Agent Server    : http://localhost:8081${NC}"
+        echo -e "${CYAN}    - VS Code Web (MS) : http://localhost:${VSCODE_PORT:-8085}${NC}"
+        echo -e "${CYAN}    - VSCodium Web     : http://localhost:${VSCODIUM_PORT:-8084} (Open-VSX Telemetry-Free)${NC}"
+        echo -e "${CYAN}    - noVNC GUI Web   : http://localhost:${GUI_NOVNC_PORT:-6080}${NC}"
+        echo -e "${CYAN}    - phpMyAdmin      : http://localhost:${PMA_PORT:-8086}${NC}"
+        echo -e "${CYAN}    - Redis Commander : http://localhost:${REDIS_UI_PORT:-8087}${NC}"
+        echo -e "${CYAN}    - pgAdmin 4 UI    : http://localhost:${PGADMIN_PORT:-8088}${NC}"
+        echo -e "${CYAN}    - Mongo Express UI: http://localhost:${ME_PORT:-8089}${NC}"
+        echo -e "${CYAN}    - Firebase UI     : http://localhost:${FIREBASE_UI_PORT:-4000}${NC}"
+        echo -e "${CYAN}    - Agent Server    : http://localhost:${AGENT_PORT:-8081}${NC}"
         ;;
     down)
         show_banner
@@ -160,57 +165,57 @@ case "$1" in
     code)
         show_banner
         echo -e "${GREEN}[+] VS Code Web Server (Microsoft):${NC}"
-        echo -e "${CYAN}    👉 http://localhost:8085${NC}"
+        echo -e "${CYAN}    👉 http://localhost:${VSCODE_PORT:-8085}${NC}"
         ;;
     vscodium|codium)
         show_banner
         echo -e "${GREEN}[+] VSCodium Web Server (Open-VSX Telemetry-Free):${NC}"
-        echo -e "${CYAN}    👉 http://localhost:8084${NC}"
+        echo -e "${CYAN}    👉 http://localhost:${VSCODIUM_PORT:-8084}${NC}"
         ;;
     gui)
         show_banner
         echo -e "${GREEN}[+] noVNC Web Browser GUI Viewer:${NC}"
-        echo -e "${CYAN}    👉 http://localhost:6080${NC}"
+        echo -e "${CYAN}    👉 http://localhost:${GUI_NOVNC_PORT:-6080}${NC}"
         ;;
     pma)
         show_banner
         echo -e "${GREEN}[+] phpMyAdmin Visual MySQL Dashboard:${NC}"
-        echo -e "${CYAN}    👉 http://localhost:8086${NC}"
+        echo -e "${CYAN}    👉 http://localhost:${PMA_PORT:-8086}${NC}"
         ;;
     redis-ui)
         show_banner
         echo -e "${GREEN}[+] Redis Commander Visual Web UI:${NC}"
-        echo -e "${CYAN}    👉 http://localhost:8087${NC}"
+        echo -e "${CYAN}    👉 http://localhost:${REDIS_UI_PORT:-8087}${NC}"
         ;;
     pgadmin)
         show_banner
         echo -e "${GREEN}[+] pgAdmin 4 Visual PostgreSQL Dashboard:${NC}"
-        echo -e "${CYAN}    👉 http://localhost:8088${NC}"
+        echo -e "${CYAN}    👉 http://localhost:${PGADMIN_PORT:-8088}${NC}"
         ;;
     mongo-ui)
         show_banner
         echo -e "${GREEN}[+] Mongo Express Visual MongoDB Dashboard:${NC}"
-        echo -e "${CYAN}    👉 http://localhost:8089${NC}"
+        echo -e "${CYAN}    👉 http://localhost:${ME_PORT:-8089}${NC}"
         ;;
     firebase|emulators)
         show_banner
         echo -e "${GREEN}[+] Firebase Local Emulator Suite UI:${NC}"
-        echo -e "${CYAN}    👉 http://localhost:4000${NC}"
+        echo -e "${CYAN}    👉 http://localhost:${FIREBASE_UI_PORT:-4000}${NC}"
         ;;
     db)
         show_banner
-        echo -e "${GREEN}[+] Connecting to MySQL Database...${NC}"
-        docker compose exec mysql-db mysql -u root -psecret sandbox_db
+        echo -e "${GREEN}[+] Connecting to MySQL / MariaDB Database...${NC}"
+        docker compose exec mysql-db mysql -u "${MYSQL_USER:-root}" -p"${MYSQL_ROOT_PASSWORD:-secret}" "${MYSQL_DATABASE:-sandbox_db}"
         ;;
     pg)
         show_banner
         echo -e "${GREEN}[+] Connecting to PostgreSQL Database...${NC}"
-        docker compose exec postgres-db psql -U postgres sandbox_db
+        docker compose exec postgres-db psql -U "${POSTGRES_USER:-postgres}" "${POSTGRES_DB:-sandbox_db}"
         ;;
     mongo)
         show_banner
         echo -e "${GREEN}[+] Connecting to MongoDB Shell...${NC}"
-        docker compose exec mongo-db mongosh -u root -p secret
+        docker compose exec mongo-db mongosh -u "${MONGO_USER:-root}" -p "${MONGO_PASSWORD:-secret}"
         ;;
     redis)
         show_banner
@@ -221,8 +226,9 @@ case "$1" in
         show_banner
         echo -e "${GREEN}[+] Creating database backup...${NC}"
         mkdir -p ./backups
-        docker compose exec mysql-db mysqldump -u root -psecret sandbox_db > ./backups/sandbox_db_$(date +%Y%m%d_%H%M%S).sql
-        echo -e "${GREEN}[✓] Database backed up to ./backups/${NC}"
+        BACKUP_FILE="./backups/sandbox_db_$(date +%Y%m%d_%H%M%S).sql"
+        docker compose exec mysql-db mysqldump -u "${MYSQL_USER:-root}" -p"${MYSQL_ROOT_PASSWORD:-secret}" "${MYSQL_DATABASE:-sandbox_db}" > "$BACKUP_FILE"
+        echo -e "${GREEN}[✓] Database backed up to ${BACKUP_FILE}${NC}"
         ;;
     auto-backup)
         show_banner
@@ -281,14 +287,14 @@ case "$1" in
         echo "  restart        Restart all services gracefully"
         echo "  shell          Launch interactive terminal inside container"
         echo "  update         Update all AI CLI tools, Flutter, npm & pip packages"
-        echo "  code           VS Code Web (MS) URL (http://localhost:8085)"
-        echo "  vscodium       VSCodium Web (Open-VSX) URL (http://localhost:8084)"
-        echo "  gui            noVNC GUI Viewer URL (http://localhost:6080)"
-        echo "  pma            phpMyAdmin URL (http://localhost:8086)"
-        echo "  redis-ui       Redis Commander URL (http://localhost:8087)"
-        echo "  pgadmin        pgAdmin 4 PostgreSQL UI URL (http://localhost:8088)"
-        echo "  mongo-ui       Mongo Express MongoDB UI URL (http://localhost:8089)"
-        echo "  firebase       Firebase Emulator UI URL (http://localhost:4000)"
+        echo "  code           VS Code Web (MS) URL (http://localhost:${VSCODE_PORT:-8085})"
+        echo "  vscodium       VSCodium Web (Open-VSX) URL (http://localhost:${VSCODIUM_PORT:-8084})"
+        echo "  gui            noVNC GUI Viewer URL (http://localhost:${GUI_NOVNC_PORT:-6080})"
+        echo "  pma            phpMyAdmin URL (http://localhost:${PMA_PORT:-8086})"
+        echo "  redis-ui       Redis Commander URL (http://localhost:${REDIS_UI_PORT:-8087})"
+        echo "  pgadmin        pgAdmin 4 PostgreSQL UI URL (http://localhost:${PGADMIN_PORT:-8088})"
+        echo "  mongo-ui       Mongo Express MongoDB UI URL (http://localhost:${ME_PORT:-8089})"
+        echo "  firebase       Firebase Emulator UI URL (http://localhost:${FIREBASE_UI_PORT:-4000})"
         echo "  db             Open MySQL database terminal"
         echo "  pg             Open PostgreSQL database terminal"
         echo "  mongo          Open MongoDB terminal"

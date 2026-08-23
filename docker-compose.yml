@@ -192,7 +192,7 @@ services:
     networks:
       - devbox-net
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-psecret"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$${MYSQL_ROOT_PASSWORD:-secret}"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -290,7 +290,7 @@ services:
     networks:
       - devbox-net
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD-SHELL", "mongosh -u $${MONGO_USER:-root} -p $${MONGO_PASSWORD:-secret} --eval \"db.adminCommand('ping')\""]
       interval: 15s
       timeout: 5s
       retries: 5
