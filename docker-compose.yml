@@ -35,6 +35,7 @@ services:
         INSTALL_FISH: ${ENABLE_FISH:-false}
         INSTALL_VSCODE_WEB: ${ENABLE_VSCODE_WEB:-true}
         INSTALL_VSCODIUM_WEB: ${ENABLE_VSCODIUM_WEB:-true}
+        INSTALL_WAYLAND: ${ENABLE_WAYLAND:-true}
         INSTALL_NEOVIM: ${ENABLE_NEOVIM:-true}
         INSTALL_MICRO: ${ENABLE_MICRO:-true}
         INSTALL_HELIX: ${ENABLE_HELIX:-false}
@@ -85,6 +86,8 @@ services:
       - FLUTTER_HOME=/opt/flutter
       - CHROME_BIN=/usr/bin/chromium-browser
       - DISPLAY=:99
+      - WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-wayland-0}
+      - XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/tmp}
     volumes:
       # 1. Project code workspace (Host folder mount)
       - ./workspace:/workspace:rw
@@ -108,6 +111,8 @@ services:
       - composer_cache:/home/agent/.cache/composer:rw
       # 11. Persistent Android SDK & Gradle cache
       - android_cache:/home/agent/.android:rw
+      # 12. Optional Host X11 / XWayland Socket Forwarding
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
     security_opt:
       - no-new-privileges:true
     deploy:

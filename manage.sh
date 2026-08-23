@@ -28,9 +28,9 @@ check_env() {
     fi
 }
 
-# Host Permissions Pre-Check & Auto-Fix Helper
+# Host Permissions & Wayland/Display Pre-Check Helper
 check_permissions() {
-    echo -e "${CYAN}[+] Running Host Permissions & Docker Pre-Check...${NC}"
+    echo -e "${CYAN}[+] Running Host Permissions & Display Pre-Check...${NC}"
     
     # 1. Ensure required host folders exist
     mkdir -p workspace devbox_config backups
@@ -52,6 +52,15 @@ check_permissions() {
         chmod -R 775 workspace devbox_config backups 2>/dev/null || true
     else
         echo -e "${GREEN}  ✓ Host workspace directory permissions OK${NC}"
+    fi
+
+    # 4. Check Wayland / X11 Host Display Status
+    if [ -n "$WAYLAND_DISPLAY" ] || [ -e "/run/user/$UID/wayland-0" ]; then
+        echo -e "${GREEN}  ✓ Linux Wayland Display detected (${WAYLAND_DISPLAY:-wayland-0}) — Weston & XWayland forwarding active!${NC}"
+    elif [ -n "$DISPLAY" ]; then
+        echo -e "${GREEN}  ✓ Linux X11 Display detected ($DISPLAY) — X11 forwarding active!${NC}"
+    else
+        echo -e "${CYAN}  ℹ Headless mode / noVNC web browser desktop active (http://localhost:6080)${NC}"
     fi
 }
 
@@ -264,7 +273,7 @@ case "$1" in
         echo ""
         echo "Commands:"
         echo "  wizard / setup Run Interactive Customization Wizard"
-        echo "  fix-perms      Run Host Permissions & Docker Group Pre-Check"
+        echo "  fix-perms      Run Host Permissions & Display Pre-Check"
         echo "  keys           View or configure API keys (.env)"
         echo "  build          Build the Devbox Docker image"
         echo "  up             Start all enabled Devbox services"

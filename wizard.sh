@@ -53,6 +53,7 @@ load_config() {
     ENABLE_FISH=${ENABLE_FISH:-false}
     ENABLE_VSCODE_WEB=${ENABLE_VSCODE_WEB:-true}
     ENABLE_VSCODIUM_WEB=${ENABLE_VSCODIUM_WEB:-true}
+    ENABLE_WAYLAND=${ENABLE_WAYLAND:-true}
     ENABLE_NEOVIM=${ENABLE_NEOVIM:-true}
     ENABLE_MICRO=${ENABLE_MICRO:-true}
     ENABLE_HELIX=${ENABLE_HELIX:-false}
@@ -115,6 +116,7 @@ ENABLE_ZSH=$ENABLE_ZSH
 ENABLE_FISH=$ENABLE_FISH
 ENABLE_VSCODE_WEB=$ENABLE_VSCODE_WEB
 ENABLE_VSCODIUM_WEB=$ENABLE_VSCODIUM_WEB
+ENABLE_WAYLAND=$ENABLE_WAYLAND
 ENABLE_NEOVIM=$ENABLE_NEOVIM
 ENABLE_MICRO=$ENABLE_MICRO
 ENABLE_HELIX=$ENABLE_HELIX
@@ -154,6 +156,7 @@ EOF
     set_env_var "ENABLE_FISH" "$ENABLE_FISH"
     set_env_var "ENABLE_VSCODE_WEB" "$ENABLE_VSCODE_WEB"
     set_env_var "ENABLE_VSCODIUM_WEB" "$ENABLE_VSCODIUM_WEB"
+    set_env_var "ENABLE_WAYLAND" "$ENABLE_WAYLAND"
     set_env_var "ENABLE_NEOVIM" "$ENABLE_NEOVIM"
     set_env_var "ENABLE_MICRO" "$ENABLE_MICRO"
     set_env_var "ENABLE_HELIX" "$ENABLE_HELIX"
@@ -226,7 +229,7 @@ select_db_engines() {
 # Shells & Editors Customizer
 select_shells_editors() {
     show_banner
-    echo -e "${BOLD}💻 Shells & Web / Terminal Editors Selection${NC}"
+    echo -e "${BOLD}💻 Shells, Display & Web / Terminal Editors Selection${NC}"
     echo ""
 
     echo -e "${BOLD}1. Web IDE Choice (Port 8085 / 8084):${NC}"
@@ -241,7 +244,12 @@ select_shells_editors() {
     esac
 
     echo ""
-    echo -e "${BOLD}2. Command Shells:${NC}"
+    echo -e "${BOLD}2. Wayland & XWayland Host Display Support:${NC}"
+    read -p "Enable Wayland + Weston + X11 Host Display Forwarding? (Y/n): " wayland_c
+    case "$wayland_c" in [nN]*) ENABLE_WAYLAND=false ;; *) ENABLE_WAYLAND=true ;; esac
+
+    echo ""
+    echo -e "${BOLD}3. Command Shells:${NC}"
     read -p "Install Zsh + Starship prompt? (Y/n): " zsh_c
     case "$zsh_c" in [nN]*) ENABLE_ZSH=false ;; *) ENABLE_ZSH=true ;; esac
 
@@ -249,7 +257,7 @@ select_shells_editors() {
     case "$fish_c" in [yY]*) ENABLE_FISH=true ;; *) ENABLE_FISH=false ;; esac
 
     echo ""
-    echo -e "${BOLD}3. Terminal Text Editors:${NC}"
+    echo -e "${BOLD}4. Terminal Text Editors:${NC}"
     read -p "Install Neovim + Vim? (Y/n): " nvim_c
     case "$nvim_c" in [nN]*) ENABLE_NEOVIM=false ;; *) ENABLE_NEOVIM=true ;; esac
 
@@ -356,7 +364,7 @@ configure_keys() {
 # Host Permissions Pre-Check Helper
 run_permissions_check() {
     show_banner
-    echo -e "${BOLD}🔒 Host Permissions & Docker Group Pre-Check${NC}"
+    echo -e "${BOLD}🔒 Host Permissions & Display Pre-Check${NC}"
     echo ""
     mkdir -p workspace devbox_config backups
     chmod -R 775 workspace devbox_config backups 2>/dev/null || true
@@ -379,6 +387,10 @@ run_permissions_check() {
         chmod -R 775 workspace devbox_config backups 2>/dev/null || true
     else
         echo -e "${GREEN}  ✓ Workspace permissions OK${NC}"
+    fi
+
+    if [ -n "$WAYLAND_DISPLAY" ] || [ -e "/run/user/$UID/wayland-0" ]; then
+        echo -e "${GREEN}  ✓ Wayland Display detected — Weston & XWayland forwarding active!${NC}"
     fi
 
     echo ""
@@ -407,6 +419,7 @@ show_summary() {
     print_row "🤖 20+ AI Agent CLIs (Claude, Kilo, etc)" "$ENABLE_AI_AGENTS"
     print_row "🔷 VS Code Web (code-server - MS)" "$ENABLE_VSCODE_WEB"
     print_row "🛡️ VSCodium Web (open-vsx Telemetry-Free)" "$ENABLE_VSCODIUM_WEB"
+    print_row "🪟 Wayland + Weston Display Forwarding" "$ENABLE_WAYLAND"
     print_row "📱 Mobile Dev (Flutter + Android SDK)" "$ENABLE_FLUTTER_ANDROID"
     print_row "⚛️ React Native Expo CLI & eas-cli" "$ENABLE_EXPO"
     print_row "🚀 Fastlane Mobile Release Automation" "$ENABLE_FASTLANE"
@@ -477,6 +490,7 @@ install_all() {
     ENABLE_FISH=true
     ENABLE_VSCODE_WEB=true
     ENABLE_VSCODIUM_WEB=true
+    ENABLE_WAYLAND=true
     ENABLE_NEOVIM=true
     ENABLE_MICRO=true
     ENABLE_HELIX=true
@@ -520,6 +534,7 @@ install_minimal() {
     ENABLE_FISH=false
     ENABLE_VSCODE_WEB=true
     ENABLE_VSCODIUM_WEB=true
+    ENABLE_WAYLAND=true
     ENABLE_NEOVIM=true
     ENABLE_MICRO=true
     ENABLE_HELIX=false
@@ -532,7 +547,7 @@ install_minimal() {
     PHP_VERSION="8.5"
     JAVA_VERSION="21"
     save_config
-    echo -e "${YELLOW}[⚡] MINIMAL CORE SUITE ENABLED! (AI Agents + Node 24 + Expo + Bun + UV + Zsh + Neovim + VS Code/VSCodium Web).${NC}"
+    echo -e "${YELLOW}[⚡] MINIMAL CORE SUITE ENABLED! (AI Agents + Node 24 + Expo + Bun + UV + Wayland + Zsh + Neovim + VS Code/VSCodium Web).${NC}"
 }
 
 # Interactive Whiptail Checklist Menu
@@ -543,6 +558,7 @@ custom_whiptail_menu() {
         "AI_AGENTS" "20+ AI Agent CLIs (Claude, Kilo, Gemini, Devin, etc)" $([ "$ENABLE_AI_AGENTS" = "true" ] && echo "ON" || echo "OFF") \
         "VSCODE_WEB" "VS Code Web Server (code-server - Microsoft)" $([ "$ENABLE_VSCODE_WEB" = "true" ] && echo "ON" || echo "OFF") \
         "VSCODIUM_WEB" "VSCodium Web Server (open-vsx Telemetry-Free)" $([ "$ENABLE_VSCODIUM_WEB" = "true" ] && echo "ON" || echo "OFF") \
+        "WAYLAND" "Wayland + Weston + XWayland Host Display Forwarding" $([ "$ENABLE_WAYLAND" = "true" ] && echo "ON" || echo "OFF") \
         "FLUTTER_ANDROID" "Flutter SDK, Dart & Android SDK API 35" $([ "$ENABLE_FLUTTER_ANDROID" = "true" ] && echo "ON" || echo "OFF") \
         "EXPO" "React Native Expo CLI & eas-cli" $([ "$ENABLE_EXPO" = "true" ] && echo "ON" || echo "OFF") \
         "FASTLANE" "Fastlane Mobile Release Automation" $([ "$ENABLE_FASTLANE" = "true" ] && echo "ON" || echo "OFF") \
@@ -575,6 +591,7 @@ custom_whiptail_menu() {
     ENABLE_AI_AGENTS=false
     ENABLE_VSCODE_WEB=false
     ENABLE_VSCODIUM_WEB=false
+    ENABLE_WAYLAND=false
     ENABLE_FLUTTER_ANDROID=false
     ENABLE_EXPO=false
     ENABLE_FASTLANE=false
@@ -608,6 +625,7 @@ custom_whiptail_menu() {
             AI_AGENTS) ENABLE_AI_AGENTS=true ;;
             VSCODE_WEB) ENABLE_VSCODE_WEB=true ;;
             VSCODIUM_WEB) ENABLE_VSCODIUM_WEB=true ;;
+            WAYLAND) ENABLE_WAYLAND=true ;;
             FLUTTER_ANDROID) ENABLE_FLUTTER_ANDROID=true ;;
             EXPO) ENABLE_EXPO=true ;;
             FASTLANE) ENABLE_FASTLANE=true ;;
@@ -650,12 +668,12 @@ run_wizard() {
     echo -e "${BOLD}Choose a Setup Wizard Option:${NC}"
     echo -e "  ${GREEN}${BOLD}[1] 🚀 INSTALL ALL (Full Supercharged Suite - Recommended Default)${NC}"
     echo -e "  ${CYAN}[2] 🎛️  Custom Selection (Toggle components ON/OFF via checklist)${NC}"
-    echo -e "  ${YELLOW}[3] ⚡ Minimal Suite (Core AI Agents + Node 24 + Expo + Bun + UV + VS Code/VSCodium Web)${NC}"
+    echo -e "  ${YELLOW}[3] ⚡ Minimal Suite (Core AI Agents + Node 24 + Expo + Bun + UV + Wayland + Zsh + Neovim + VS Code/VSCodium Web)${NC}"
     echo -e "  ${CYAN}[4] ⚙️ Customize Stack Versions (Node $NODE_VERSION, PHP $PHP_VERSION, Java $JAVA_VERSION)${NC}"
     echo -e "  ${CYAN}[5] 🗄️ Database & Cache Options (MySQL/MariaDB, PostgreSQL, MongoDB, Redis/KeyDB)${NC}"
-    echo -e "  ${CYAN}[6] 💻 Shells & Web/Terminal Editors (VS Code MS vs VSCodium Open-VSX, Shells, Editors)${NC}"
+    echo -e "  ${CYAN}[6] 💻 Shells, Display & Web/Terminal Editors (VS Code MS vs VSCodium Open-VSX, Wayland, Shells, Editors)${NC}"
     echo -e "  ${CYAN}[7] 🔑 Configure API Keys (.env helper)${NC}"
-    echo -e "  ${CYAN}[8] 🔒 Run Host Permissions & Docker Group Pre-Check${NC}"
+    echo -e "  ${CYAN}[8] 🔒 Run Host Permissions & Display Pre-Check${NC}"
     echo -e "  [9] 🚪 Exit without changes"
     echo ""
     read -p "Select option [1-9]: " main_choice

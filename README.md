@@ -1,6 +1,6 @@
 # 🟢 Mayanktaker Devbox
 
-> **Skeptic-audited, production-grade Docker sandbox** for running 20+ AI coding agents, full-stack development tools, and mobile development (Flutter/Android/React Native Expo/Fastlane) — all safely isolated from your host machine. Includes an **Interactive Setup Wizard** to customize stack runtimes (Node, PHP, Java, Rust, Go, Bun, uv, Deno, C/C++), shell choices (Bash, Zsh, Fish), Web IDEs (VS Code Web MS vs VSCodium Web Open-VSX Telemetry-Free), terminal editors (Neovim/Vim, Micro, Helix), and database containers (MySQL, MariaDB, Postgres, Mongo, Redis, KeyDB) with a **Host Permissions Pre-Check & Auto-Fix System**!
+> **Skeptic-audited, production-grade Docker sandbox** for running 20+ AI coding agents, full-stack development tools, and mobile development (Flutter/Android/React Native Expo/Fastlane) — all safely isolated from your host machine. Includes an **Interactive Setup Wizard** to customize stack runtimes (Node, PHP, Java, Rust, Go, Bun, uv, Deno, C/C++), shell choices (Bash, Zsh, Fish), Web IDEs (VS Code Web MS vs VSCodium Web Open-VSX Telemetry-Free), terminal editors (Neovim/Vim, Micro, Helix), display servers (X11/noVNC & Wayland/Weston), and database containers (MySQL, MariaDB, Postgres, Mongo, Redis, KeyDB) with a **Host Permissions Pre-Check & Auto-Fix System**!
 
 **© [Mayanktaker Computers & Web Development](https://mayanktaker.com)**
 
@@ -24,15 +24,16 @@ Special thanks to Reddit user **[u/kaas_is_leven](https://www.reddit.com/r/kiloc
 
 ---
 
-## 🔒 Permissions & Docker Group Pre-Check System
+## 🔒 Permissions & Display Pre-Check System
 
-To ensure users never run into `Permission denied` errors or Docker daemon access issues on Linux, Mayanktaker Devbox includes an automated pre-check:
+To ensure users never run into `Permission denied` errors, Docker daemon access issues, or display server mismatches on Linux, Mayanktaker Devbox includes an automated pre-check:
 
-- **Automated Check**: `./manage.sh build` and `./manage.sh up` automatically run host directory & Docker group pre-checks before executing.
-- **Manual Pre-Check**: Run `./manage.sh fix-perms` anytime or select **Option `[8] 🔒 Run Host Permissions Pre-Check`** in the setup wizard.
-- **Auto-Fixes**:
+- **Automated Check**: `./manage.sh build` and `./manage.sh up` automatically run host directory, Docker group & Wayland/X11 display pre-checks before executing.
+- **Manual Pre-Check**: Run `./manage.sh fix-perms` anytime or select **Option `[8] 🔒 Run Host Permissions & Display Pre-Check`** in the setup wizard.
+- **Auto-Fixes & Detections**:
   - Automatically verifies & sets `chmod 775` on host `./workspace`, `./devbox_config`, and `./backups` directories.
   - Automatically prompts & adds your Linux host user to the `docker` group (`sudo usermod -aG docker $USER`).
+  - Detects active Wayland host sessions (`$WAYLAND_DISPLAY`) or X11 displays (`$DISPLAY`) for native display socket forwarding!
 
 ---
 
@@ -41,11 +42,12 @@ To ensure users never run into `Permission denied` errors or Docker daemon acces
 Run `./manage.sh wizard` anytime to configure your devbox:
 
 - **🚀 Install All (Full Supercharged Suite)** — Enable everything!
-- **⚡ Minimal Suite** — Ultra-lightweight core setup (AI Agents + Node 24 + Expo + Bun + UV + Zsh + Neovim + VS Code/VSCodium Web)
+- **⚡ Minimal Suite** — Ultra-lightweight core setup (AI Agents + Node 24 + Expo + Bun + UV + Wayland + Zsh + Neovim + VS Code/VSCodium Web)
 - **🎛️ Custom Component Toggles**:
   - [x] **AI Agent CLIs** (Claude, Kilo, Gemini, Antigravity, Devin, Aider, etc.)
   - [x] **VS Code Web Server (`code-server` - Microsoft Ecosystem - Port 8085)**
   - [x] **VSCodium Web Server (`openvscode-server` - Open-VSX Telemetry-Free - Port 8084)**
+  - [x] **Wayland + Weston & XWayland Host Display Socket Forwarding**
   - [x] **Mobile Development (Flutter SDK, Dart, Android SDK API 35)**
   - [x] **React Native Expo CLI & eas-cli (Cloud iOS/Android Builds)**
   - [x] **Fastlane Mobile Release Automation**
@@ -108,18 +110,12 @@ cd mayanktaker-devbox
 
 ---
 
-## 💻 Web IDE Choices & Desktop Integration
+## 🖥️ Display Modes: Wayland, X11 & noVNC Web Desktop
 
-Mayanktaker Devbox supports both major open-source web IDEs:
+Mayanktaker Devbox supports **dual display modes** for GUI applications:
 
-| Web IDE | Port | Marketplace | Telemetry Status |
-| :--- | :--- | :--- | :--- |
-| **VS Code Web** (`code-server`) ⭐ | `8085` | Microsoft Extensions | Telemetry disabled in sandbox |
-| **VSCodium Web** (`openvscode-server`) ⭐ | `8084` | Open-VSX Registry | 100% Telemetry-Free open source |
-
-- **Install Options**: You can install **VS Code Web only**, **VSCodium Web only**, or **BOTH side-by-side** via `./manage.sh wizard` Option `[6]`!
-- **GUI / Desktop App Support**: Desktop GUI apps run via Xvfb + noVNC in your browser at `http://localhost:6080`.
-- **Native Host IDEs**: Connect native host IDEs (Cursor Desktop, VS Code Desktop) using **Remote - Containers / SSH**.
+1. **Wayland & XWayland Native Host Forwarding**: Container GUI apps render natively on Linux Wayland hosts (Ubuntu 24.04/26.04, Fedora, Arch) via Weston & Qt/GTK Wayland sockets.
+2. **Headless noVNC Web Desktop**: GUI apps run inside Xvfb + noVNC browser window at `http://localhost:6080` (accessible from any OS or mobile browser).
 
 ---
 
@@ -133,6 +129,7 @@ Mayanktaker Devbox supports both major open-source web IDEs:
 | **Node.js** | **24 LTS** ⭐ | Node 26 Current | Active LTS (Aug 2026) |
 | **VS Code Web** | **Installed (Port 8085)** ⭐ | Optional | Microsoft `code-server` |
 | **VSCodium Web** | **Installed (Port 8084)** ⭐ | Optional | Open-VSX `openvscode-server` |
+| **Wayland Support** | **Installed & Enabled** ⭐ | Optional | Weston, Wayland protocols, Qt/GTK |
 | **Flutter SDK** | **Installed** ⭐ | Optional | Full SDK + Dart |
 | **Android SDK** | **API 35** ⭐ | Optional | cmdline-tools, platform-tools, build-tools |
 | **React Native Expo** | **Installed** ⭐ | Optional | `expo-cli` & `eas-cli` (Cloud iOS Builds) |
@@ -224,7 +221,7 @@ All data, settings, extensions, and database records survive container restarts 
 
 ```bash
 ./manage.sh wizard         # Run Interactive Customization Wizard
-./manage.sh fix-perms      # Run Host Permissions & Docker Group Pre-Check
+./manage.sh fix-perms      # Run Host Permissions & Display Pre-Check
 ./manage.sh keys           # View or configure API keys (.env)
 ./manage.sh build          # Build the Devbox Docker image with current settings
 ./manage.sh up             # Start all enabled services

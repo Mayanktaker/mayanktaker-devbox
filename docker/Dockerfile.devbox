@@ -3,6 +3,7 @@
 # Skeptic-audited & 100% Modular Stack:
 # Runtimes: Node, PHP, Java, Rust, Go, Bun, UV, Composer, Deno, C/C++ Toolchain, Kotlin
 # Mobile Dev: Flutter/Android, React Native Expo CLI, Fastlane, Watchman, Android NDK
+# Display & GUI: X11 / Xvfb, noVNC Web, Wayland / XWayland Host Forwarding & Weston Compositor
 # Shells: Bash, Zsh (+ Oh My Zsh/Starship), Fish
 # Editors: VS Code Web (code-server), VSCodium Web (openvscode-server Telemetry-Free), Neovim/Vim, Micro, Helix
 # Web Tools: AI Agents, Playwright, Lighthouse, Web Scaffolding CLIs (Next, Astro, Vite, Tailwind)
@@ -35,6 +36,7 @@ ARG INSTALL_ZSH=true
 ARG INSTALL_FISH=false
 ARG INSTALL_VSCODE_WEB=true
 ARG INSTALL_VSCODIUM_WEB=true
+ARG INSTALL_WAYLAND=true
 ARG INSTALL_NEOVIM=true
 ARG INSTALL_MICRO=true
 ARG INSTALL_HELIX=false
@@ -51,7 +53,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers \
     PATH="/opt/openvscode-server/bin:/home/agent/.cargo/bin:/home/agent/.deno/bin:/usr/local/go/bin:/home/agent/.local/bin:/home/agent/.bun/bin:/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:${PATH}"
 
-# ── Layer 1: Core Ubuntu system packages, build tools & Java ──
+# ── Layer 1: Core Ubuntu system packages, build tools, Java & Wayland/X11 libraries ──
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     wget \
@@ -88,6 +90,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     novnc \
     websockify \
     dbus-x11 \
+    weston \
+    wayland-protocols \
+    libwayland-client0 \
+    libwayland-egl1 \
+    libwayland-server0 \
+    qt6-wayland \
+    qt5-wayland \
     libgtk-3-0 \
     libnss3 \
     libxss1 \
