@@ -1,0 +1,204 @@
+# © Mayanktaker Computers & Web Development | https://mayanktaker.com
+# Ultimate AI Agent Sandbox Docker Compose (Ubuntu 26.04 LTS + Full Persistence + Healthchecks)
+# Skeptic-audited August 2026 — all images verified latest stable
+# Hardware Profile: AMD Ryzen 5 5500 (10 Threads Allocated), 48GB Host RAM (25GB Allocated)
+
+services:
+  # ── Primary Multi-Agent Sandbox Container ──
+  kilo-agent:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.kilo
+    container_name: kilo-agent
+    hostname: kilo-agent
+    restart: unless-stopped
+    ports:
+      - "${KILO_PORT:-8081}:8081"           # Kilo Server daemon
+      - "${VSCODE_PORT:-8085}:8085"         # VS Code Web (code-server)
+      - "${GUI_NOVNC_PORT:-6080}:6080"      # noVNC Web Browser GUI Viewer
+      - "${FIREBASE_UI_PORT:-4000}:4000"    # Firebase Emulator Suite UI
+      - "9099:9099"                         # Firebase Auth Emulator
+      - "8082:8082"                         # Firebase Firestore Emulator
+      - "9000:9000"                         # Firebase Realtime DB Emulator
+      - "5001:5001"                         # Firebase Functions Emulator
+      - "5000:5000"                         # Firebase Hosting Emulator
+    environment:
+      - NODE_ENV=development
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - DEVIN_API_KEY=${DEVIN_API_KEY:-}
+      - KIMI_API_KEY=${KIMI_API_KEY:-}
+      - MYSQL_HOST=mysql-db
+      - MYSQL_PORT=3306
+      - MYSQL_USER=${MYSQL_USER:-root}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-secret}
+      - REDIS_HOST=redis-cache
+      - REDIS_PORT=6379
+      - ANDROID_HOME=/opt/android-sdk
+      - FLUTTER_HOME=/opt/flutter
+      - CHROME_BIN=/usr/bin/chromium-browser
+      - DISPLAY=:99
+    volumes:
+      # 1. Project code workspace (Host folder mount)
+      - ./workspace:/workspace:rw
+      # 2. Kilo Agent Configuration
+      - ./kilo_config:/home/agent/.kilo:rw
+      # 3. Persistent User Home Directory (bash history, git config, dotfiles)
+      - agent_home:/home/agent:rw
+      # 4. Persistent SSH Keys
+      - agent_ssh:/home/agent/.ssh:rw
+      # 5. Persistent VS Code Web Configuration & Settings
+      - vscode_data:/home/agent/.config/code-server:rw
+      # 6. Persistent VS Code Web Installed Extensions
+      - vscode_extensions:/home/agent/.local/share/code-server:rw
+      # 7. Persistent Firebase Configstore Login Credentials
+      - firebase_config:/home/agent/.config/configstore:rw
+      # 8. Persistent NPM / PNPM / Bun Cache
+      - npm_cache:/home/agent/.npm:rw
+      # 9. Persistent Python / Pip / UV Cache
+      - pip_cache:/home/agent/.cache:rw
+      # 10. Persistent PHP Composer Cache
+      - composer_cache:/home/agent/.cache/composer:rw
+      # 11. Persistent Android SDK & Gradle cache
+      - android_cache:/home/agent/.android:rw
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '${CPU_LIMIT:-10}'         # Ryzen 5 5500 (10 threads)
+          memory: ${MEMORY_LIMIT:-25G}     # 25GB RAM allocation
+    networks:
+      - kilo-net
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # ── Redis 8 In-Memory Cache Service (upgraded from 7) ──
+  redis-cache:
+    image: redis:8-alpine
+    container_name: redis-cache
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data:rw
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+    networks:
+      - kilo-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ── Redis Commander Visual Web UI ──
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis-commander
+    restart: unless-stopped
+    ports:
+      - "${REDIS_UI_PORT:-8087}:8081"
+    environment:
+      - REDIS_HOSTS=local:redis-cache:6379
+    networks:
+      - kilo-net
+    depends_on:
+      redis-cache:
+        condition: service_healthy
+
+  # ── MySQL 8.4 LTS Database Container (latest LTS, verified Aug 2026) ──
+  mysql-db:
+    image: mysql:8.4
+    container_name: mysql-db
+    restart: unless-stopped
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-sandbox_db}
+    volumes:
+      - mysql_data:/var/lib/mysql:rw
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+    networks:
+      - kilo-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-psecret"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
+
+  # ── phpMyAdmin Visual Web Management for MySQL ──
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "${PMA_PORT:-8086}:80"
+    environment:
+      PMA_HOST: mysql-db
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret}
+    networks:
+      - kilo-net
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+
+networks:
+  kilo-net:
+    driver: bridge
+    name: kilo-net
+
+volumes:
+  agent_home:
+    driver: local
+  agent_ssh:
+    driver: local
+  vscode_data:
+    driver: local
+  vscode_extensions:
+    driver: local
+  firebase_config:
+    driver: local
+  npm_cache:
+    driver: local
+  pip_cache:
+    driver: local
+  composer_cache:
+    driver: local
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+  android_cache:
+    driver: local

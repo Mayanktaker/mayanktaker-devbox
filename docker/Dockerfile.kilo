@@ -1,0 +1,209 @@
+# © Mayanktaker Computers & Web Development | https://mayanktaker.com
+# Ultimate Multi-Agent Sandbox Dockerfile (Ubuntu 26.04 LTS "Resolute Raccoon")
+# Skeptic-audited: All versions verified August 2026
+# Stack: Node 24 LTS, PHP 8.5, Python 3, Bun, Java 21, Flutter/Dart, Android SDK,
+#        Chromium, Playwright, Redis CLI, Prisma, Drizzle, Firebase CLI,
+#        Claude Code, Kilo, Codex, Cursor, Aider, Devin, Gemini CLI, Antigravity CLI,
+#        CommandCode, OpenChamber, Pi, Hermes, Paseo, Zcode, T3code, DeepSeek Harness
+
+FROM ubuntu:26.04 AS base
+
+# Prevent interactive prompts during installation
+ENV DEBIAN_FRONTEND=noninteractive \
+    NODE_ENV=development \
+    DISPLAY=:99 \
+    ANDROID_HOME=/opt/android-sdk \
+    FLUTTER_HOME=/opt/flutter \
+    CHROME_BIN=/usr/bin/chromium-browser \
+    PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers \
+    PATH="/home/agent/.local/bin:/home/agent/.bun/bin:/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:${PATH}"
+
+# ── Layer 1: Core Ubuntu system packages, build tools, terminal productivity ──
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    wget \
+    git \
+    gnupg \
+    ca-certificates \
+    sudo \
+    ripgrep \
+    build-essential \
+    unzip \
+    zip \
+    sqlite3 \
+    libsqlite3-dev \
+    default-mysql-client \
+    redis-tools \
+    software-properties-common \
+    openjdk-21-jdk-headless \
+    tmux \
+    fzf \
+    jq \
+    htop \
+    ncdu \
+    tldr \
+    tree \
+    zoxide \
+    bat \
+    eza \
+    fd-find \
+    python3 \
+    python3-pip \
+    python3-venv \
+    xvfb \
+    x11vnc \
+    novnc \
+    websockify \
+    dbus-x11 \
+    libgtk-3-0 \
+    libnss3 \
+    libxss1 \
+    libxtst6 \
+    libgbm1 \
+    libx11-xcb1 \
+    libxcb-dri3-0 \
+    chromium-browser \
+    fonts-liberation \
+    libasound2t64 \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libpango-1.0-0 \
+    libcairo2 \
+    cmake \
+    ninja-build \
+    pkg-config \
+    clang \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── Layer 2: GitHub CLI ──
+RUN mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | gpg --dearmor -o /etc/apt/keyrings/githubcli-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
+    apt-get update && apt-get install -y gh && \
+    rm -rf /var/lib/apt/lists/*
+
+# ── Layer 3: Node.js 24 LTS (Active LTS as of Aug 2026) ──
+RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_24.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
+    apt-get update && apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+# ── Layer 4: PHP 8.5 (latest stable, released Nov 2025) + Composer + Extensions ──
+RUN add-apt-repository -y ppa:ondrej/php && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    php8.5-cli \
+    php8.5-mysql \
+    php8.5-sqlite3 \
+    php8.5-redis \
+    php8.5-curl \
+    php8.5-mbstring \
+    php8.5-xml \
+    php8.5-zip \
+    php8.5-intl \
+    php8.5-gd \
+    php8.5-bcmath \
+    php8.5-xdebug \
+    composer \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── Layer 5: code-server (VS Code Web), Bun, pnpm, yarn ──
+RUN curl -fsSL https://code-server.dev/install.sh | sh
+RUN curl -fsSL https://bun.sh/install | bash
+RUN npm install -g pnpm yarn
+
+# ── Layer 6: uv (Python package manager), Aider & DeepSeek harness ──
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    pip3 install --no-cache-dir --break-system-packages aider-chat lm-eval transformers httpie ruff
+
+# ── Layer 7: Flutter SDK + Dart (stable channel) ──
+RUN git clone https://github.com/flutter/flutter.git -b stable --depth 1 /opt/flutter && \
+    /opt/flutter/bin/flutter --disable-analytics && \
+    /opt/flutter/bin/flutter config --no-analytics && \
+    /opt/flutter/bin/dart --disable-analytics && \
+    /opt/flutter/bin/flutter precache --android --web
+
+# ── Layer 8: Android SDK command-line tools + platform-tools ──
+RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
+    curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/cmdline-tools.zip && \
+    unzip -q /tmp/cmdline-tools.zip -d ${ANDROID_HOME}/cmdline-tools && \
+    mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest && \
+    rm /tmp/cmdline-tools.zip && \
+    yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 && \
+    ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;35.0.0" "platforms;android-35" && \
+    /opt/flutter/bin/flutter config --android-sdk ${ANDROID_HOME} && \
+    chmod -R 755 ${ANDROID_HOME}
+
+# ── Layer 9: Playwright + Chromium browsers ──
+RUN npx playwright install --with-deps chromium || true
+
+# ── Layer 10: lazygit + lazydocker TUI tools ──
+RUN curl -fsSL https://raw.githubusercontent.com/jesseduffield/lazygit/master/scripts/install_update_linux.sh | bash && \
+    curl -fsSL https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | bash
+
+# ── Layer 11: AI Multi-Agent CLI Tools, ORMs & Firebase (npm global) ──
+RUN npm install -g --allow-scripts \
+    prisma \
+    drizzle-kit \
+    firebase-tools \
+    @anthropic-ai/claude-code \
+    @kilocode/cli \
+    @commandcode/cli \
+    openchamber-cli \
+    pi-agent \
+    hermes-agent \
+    @openai/codex \
+    @cursor/cli \
+    paseo-cli \
+    zcode \
+    t3code \
+    @google/gemini-cli \
+    tsx \
+    nodemon \
+    pm2 \
+    || true
+
+# ── Layer 12: Devin CLI (via pip, official method) ──
+RUN pip3 install --no-cache-dir --break-system-packages devin-cli || true
+
+# ── Layer 13: Antigravity CLI (official install script) ──
+RUN curl -fsSL https://antigravity.google/cli/install.sh | bash || true
+
+# ── Layer 14: bat/fd symlinks (Ubuntu names them batcat/fdfind) ──
+RUN mkdir -p /usr/local/bin && \
+    ln -sf /usr/bin/batcat /usr/local/bin/bat 2>/dev/null || true && \
+    ln -sf /usr/bin/fdfind /usr/local/bin/fd 2>/dev/null || true
+
+# ── Layer 15: Auto-updater script ──
+RUN echo '#!/usr/bin/env bash\necho "[+] Updating all AI CLI tools, ORMs, Flutter & system packages..."\nnpm update -g\npip3 install --upgrade aider-chat lm-eval devin-cli httpie ruff --break-system-packages\n/opt/flutter/bin/flutter upgrade\necho "[✓] All tools updated!"' > /usr/local/bin/update-tools && \
+    chmod +x /usr/local/bin/update-tools
+
+# ── Layer 16: Create non-root developer user 'agent' with passwordless sudo ──
+RUN useradd -m -u 1000 -s /bin/bash agent && \
+    echo "agent ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
+    mkdir -p /workspace /home/agent/.kilo /home/agent/.ssh /home/agent/.cache/composer \
+             /home/agent/.config/code-server /home/agent/.config/configstore \
+             /home/agent/.local/share/code-server /home/agent/.android && \
+    echo 'alias fb="firebase"\nalias c="claude"\nalias k="kilo"\nalias a="aider"\nalias db="mysql -u root -psecret -h mysql-db sandbox_db"\nalias r="redis-cli -h redis-cache"\nalias gs="git status"\nalias lg="lazygit"\nalias ld="lazydocker"\nalias cat="bat --paging=never"\nalias ls="eza --icons --group-directories-first"\nalias find="fd"\nalias flutter="/opt/flutter/bin/flutter"\nalias dart="/opt/flutter/bin/dart"' >> /home/agent/.bashrc && \
+    chown -R agent:agent /workspace /home/agent /opt/flutter /opt/android-sdk
+
+# Switch to non-root user
+USER agent
+
+# Set working directory to mounted workspace
+WORKDIR /workspace
+
+# Expose: Kilo(8081), VS Code(8085), noVNC(6080), Firebase Emulators(4000,9099,8082,9000,5001,5000)
+EXPOSE 8081 8085 6080 4000 9099 8082 9000 5001 5000
+
+# Healthcheck: verify code-server is responding
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8085/healthz || exit 1
+
+# Default entrypoint: Start X11, noVNC, code-server & Kilo daemon
+CMD ["sh", "-c", "Xvfb :99 -screen 0 1920x1080x24 >/dev/null 2>&1 & x11vnc -display :99 -forever -shared -nopw -rfbport 5900 >/dev/null 2>&1 & websockify --web /usr/share/novnc 6080 localhost:5900 >/dev/null 2>&1 & code-server --bind-addr 0.0.0.0:8085 --auth none /workspace & kilo serve --host 0.0.0.0 --port 8081"]

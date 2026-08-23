@@ -1,0 +1,22 @@
+# © Mayanktaker Computers & Web Development | https://mayanktaker.com
+# .gitignore — Kilo Docker Sandbox
+
+# Environment secrets
+.env
+
+# Backups (can be large)
+backups/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Node modules (shouldn't be in workspace root, but just in case)
+node_modules/
+
+# Python caches
+__pycache__/
+*.pyc

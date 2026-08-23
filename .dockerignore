@@ -1,0 +1,39 @@
+# © Mayanktaker Computers & Web Development | https://mayanktaker.com
+# .dockerignore — Prevent bloating the Docker build context
+
+# Version control
+.git
+.gitignore
+
+# IDE / Editor files
+.vscode
+.idea
+*.swp
+*.swo
+
+# Node modules & caches
+node_modules
+.npm
+
+# Python caches
+__pycache__
+*.pyc
+.pytest_cache
+
+# Build artifacts
+dist
+build
+.next
+
+# Docker backups
+backups/
+
+# Environment files with secrets
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

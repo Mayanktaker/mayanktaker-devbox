@@ -1,0 +1,30 @@
+// © Mayanktaker Computers & Web Development | https://mayanktaker.com
+// Kilo Code CLI Sandbox Configuration
+{
+  "$schema": "https://kilo.dev/config.schema.json",
+  "provider": {
+    // LocalAI Provider Configuration (Docker internal DNS)
+    "LocalAI": {
+      "name": "LocalAI (Docker Local)",
+      "options": {
+        "baseURL": "http://localai:8080/v1",
+        "apiKey": "not-needed"
+      }
+    },
+    // Ollama Provider Configuration (Docker internal DNS)
+    "Ollama": {
+      "name": "Ollama (Docker Local)",
+      "options": {
+        "baseURL": "http://ollama:11434/v1",
+        "apiKey": "ollama"
+      }
+    }
+  },
+  "indexing": {
+    "enabled": true,
+    "provider": "openai-compatible",
+    "openai-compatible": {
+      "baseUrl": "http://localai:8080/v1"
+    }
+  }
+}
