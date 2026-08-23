@@ -105,6 +105,16 @@ cd mayanktaker-devbox
 
 ---
 
+## 💻 Desktop Apps vs Web IDE & CLI Tools
+
+Mayanktaker Devbox comes pre-configured with **VS Code Web (`code-server`)** at `http://localhost:8085` and **noVNC Desktop Viewer** at `http://localhost:6080`.
+
+- **GUI / Desktop App Support**: Desktop GUI apps (Chromium, Electron apps, Linux desktop viewers) run via Xvfb + noVNC in your browser at `http://localhost:6080`.
+- **CLI Agents & Tooling**: 20+ AI CLI tools (`claude`, `kilo`, `codex`, `cursor`, `devin`, `gemini`, `antigravity`) run natively inside the sandboxed container shell.
+- **Native Host IDEs**: If you prefer native host desktop IDEs (like Cursor Desktop or VS Code Desktop), you can use the **Remote - Containers / SSH** extension to connect directly to `mayanktaker-devbox`.
+
+---
+
 ## 🧰 What's Included
 
 ### Base OS, Runtimes & Mobile SDKs
@@ -159,6 +169,18 @@ cd mayanktaker-devbox
 | **Zcode** | `zcode` | Z.ai terminal agent |
 | **T3code** | `t3code` | T3 Nightly coding CLI |
 | **DeepSeek Harness** | `lm-eval` + `transformers` | Model evaluation framework |
+
+### 🌐 Web Dashboards & Services
+
+| Service | URL | Purpose |
+| :--- | :--- | :--- |
+| **VS Code Web** | `http://localhost:8085` | Full VS Code in browser with persistent extensions |
+| **noVNC GUI** | `http://localhost:6080` | View desktop/Electron apps in browser |
+| **phpMyAdmin** | `http://localhost:8086` | Visual MySQL / MariaDB database management |
+| **Redis Commander** | `http://localhost:8087` | Visual Redis / KeyDB cache management |
+| **pgAdmin 4 UI** | `http://localhost:8088` | Visual PostgreSQL database management |
+| **Mongo Express UI** | `http://localhost:8089` | Visual MongoDB database management |
+| **Firebase UI** | `http://localhost:4000` | Firebase Local Emulator Suite |
 
 ---
 
