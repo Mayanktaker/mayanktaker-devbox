@@ -33,6 +33,36 @@ case "$1" in
     wizard|setup|config)
         bash ./wizard.sh
         ;;
+    keys)
+        show_banner
+        check_env
+        echo -e "${GREEN}[+] Current API Keys Status in .env:${NC}"
+        echo ""
+        source .env 2>/dev/null || true
+        print_key_status() {
+            local name="$1"
+            eval "local val=\$$name"
+            if [ -n "$val" ]; then
+                echo -e "  - ${name}: ${GREEN}[✓ Configured] (${val:0:6}...)${NC}"
+            else
+                echo -e "  - ${name}: ${YELLOW}[✗ Not set]${NC}"
+            fi
+        }
+        print_key_status "OPENAI_API_KEY"
+        print_key_status "ANTHROPIC_API_KEY"
+        print_key_status "GEMINI_API_KEY"
+        print_key_status "DEVIN_API_KEY"
+        print_key_status "KIMI_API_KEY"
+        print_key_status "CURSOR_API_KEY"
+        print_key_status "GITHUB_TOKEN"
+        echo ""
+        read -p "Would you like to configure/update these keys now? (y/N): " edit_keys
+        case "$edit_keys" in
+            [yY]*)
+                bash ./wizard.sh
+                ;;
+        esac
+        ;;
     build)
         show_banner
         check_env
@@ -169,6 +199,7 @@ case "$1" in
         echo ""
         echo "Commands:"
         echo "  wizard / setup Run Interactive Customization Wizard"
+        echo "  keys           View or configure API keys (.env)"
         echo "  build          Build the Devbox Docker image"
         echo "  up             Start all enabled Devbox services"
         echo "  down           Stop Devbox services (data persisted)"

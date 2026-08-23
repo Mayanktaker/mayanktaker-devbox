@@ -41,6 +41,20 @@ load_config() {
     fi
 }
 
+# Helper function to set or replace env var in .env
+set_env_var() {
+    local key="$1"
+    local val="$2"
+    if [ ! -f "$ENV_FILE" ]; then
+        cp .env.example "$ENV_FILE"
+    fi
+    if grep -q "^${key}=" "$ENV_FILE"; then
+        sed -i "s|^${key}=.*|${key}=${val}|" "$ENV_FILE"
+    else
+        echo "${key}=${val}" >> "$ENV_FILE"
+    fi
+}
+
 # Save configuration to .devbox.conf and update .env
 save_config() {
     cat <<EOF > "$CONF_FILE"
@@ -55,22 +69,6 @@ ENABLE_REDIS=$ENABLE_REDIS
 ENABLE_FIREBASE=$ENABLE_FIREBASE
 ENABLE_DEV_TOOLS=$ENABLE_DEV_TOOLS
 EOF
-
-    # Ensure .env exists
-    if [ ! -f "$ENV_FILE" ]; then
-        cp .env.example "$ENV_FILE"
-    fi
-
-    # Helper function to set or replace env var
-    set_env_var() {
-        local key="$1"
-        local val="$2"
-        if grep -q "^${key}=" "$ENV_FILE"; then
-            sed -i "s|^${key}=.*|${key}=${val}|" "$ENV_FILE"
-        else
-            echo "${key}=${val}" >> "$ENV_FILE"
-        fi
-    }
 
     set_env_var "ENABLE_AI_AGENTS" "$ENABLE_AI_AGENTS"
     set_env_var "ENABLE_FLUTTER_ANDROID" "$ENABLE_FLUTTER_ANDROID"
@@ -88,6 +86,49 @@ EOF
     set_env_var "COMPOSE_PROFILES" "$PROFILES"
 
     echo -e "${GREEN}[✓] Configuration saved to ${CONF_FILE} and ${ENV_FILE}${NC}"
+}
+
+# Interactive API Keys Config Helper
+configure_keys() {
+    show_banner
+    echo -e "${BOLD}🔑 Configure AI Provider & Cloud API Keys (.env)${NC}"
+    echo -e "${CYAN}Press Enter to keep existing key value, or type a new key value.${NC}"
+    echo ""
+
+    if [ -f "$ENV_FILE" ]; then
+        source "$ENV_FILE" 2>/dev/null || true
+    fi
+
+    prompt_key() {
+        local varname="$1"
+        local label="$2"
+        eval "local current=\$$varname"
+        local masked=""
+        if [ -n "$current" ]; then
+            masked="[Key configured: ${current:0:6}...]"
+        else
+            masked="[Not configured]"
+        fi
+        read -p "$label $masked: " input_val
+        if [ -n "$input_val" ]; then
+            set_env_var "$varname" "$input_val"
+            echo -e "${GREEN}  ✓ Updated $varname${NC}"
+        else
+            echo -e "${CYAN}  - Kept $varname${NC}"
+        fi
+    }
+
+    prompt_key "OPENAI_API_KEY" "OpenAI API Key (GPT-4o/Codex)"
+    prompt_key "ANTHROPIC_API_KEY" "Anthropic API Key (Claude Code)"
+    prompt_key "GEMINI_API_KEY" "Google Gemini / Antigravity API Key"
+    prompt_key "DEVIN_API_KEY" "Devin AI API Key"
+    prompt_key "KIMI_API_KEY" "Kimi Code API Key"
+    prompt_key "CURSOR_API_KEY" "Cursor API Key"
+    prompt_key "GITHUB_TOKEN" "GitHub Personal Access Token"
+
+    echo ""
+    echo -e "${GREEN}[✓] API Keys configured in ${ENV_FILE}!${NC}"
+    sleep 2
 }
 
 # Summary table view
@@ -148,7 +189,7 @@ install_minimal() {
     echo -e "${YELLOW}[⚡] MINIMAL CORE SUITE ENABLED! (AI Agents + Node 24 + VS Code Web).${NC}"
 }
 
-# Interactive Whiptail Checklist Menu (if whiptail available)
+# Interactive Whiptail Checklist Menu
 custom_whiptail_menu() {
     local CHOICE
     CHOICE=$(whiptail --title "Mayanktaker Devbox Custom Component Selection" \
@@ -188,7 +229,7 @@ custom_whiptail_menu() {
     save_config
 }
 
-# CLI Terminal Custom Menu (Fallback if whiptail not interactive)
+# CLI Terminal Custom Menu
 custom_cli_menu() {
     toggle_var() {
         local name="$1"
@@ -239,13 +280,14 @@ run_wizard() {
     show_banner
     show_summary
 
-    echo -e "${BOLD}Choose a Setup Wizard Mode:${NC}"
+    echo -e "${BOLD}Choose a Setup Wizard Option:${NC}"
     echo -e "  ${GREEN}${BOLD}[1] 🚀 INSTALL ALL (Full Supercharged Suite - Recommended)${NC}"
     echo -e "  ${CYAN}[2] 🎛️  Custom Selection (Toggle components ON/OFF)${NC}"
     echo -e "  ${YELLOW}[3] ⚡ Minimal Suite (Core AI Agents + Node 24 + VS Code Web)${NC}"
-    echo -e "  [4] 🚪 Exit without changes"
+    echo -e "  ${CYAN}[4] 🔑 Configure API Keys (.env helper)${NC}"
+    echo -e "  [5] 🚪 Exit without changes"
     echo ""
-    read -p "Select option [1-4]: " main_choice
+    read -p "Select option [1-5]: " main_choice
 
     case "$main_choice" in
         1)
@@ -262,6 +304,11 @@ run_wizard() {
             install_minimal
             ;;
         4)
+            configure_keys
+            run_wizard
+            return
+            ;;
+        5)
             echo -e "${YELLOW}Exited without changing configuration.${NC}"
             exit 0
             ;;
