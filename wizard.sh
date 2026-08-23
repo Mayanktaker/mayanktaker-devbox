@@ -71,15 +71,18 @@ load_config() {
     fi
 }
 
-# Helper function to set or replace env var in .env
+# Helper function to set or replace env var in .env safely
 set_env_var() {
     local key="$1"
     local val="$2"
     if [ ! -f "$ENV_FILE" ]; then
         cp .env.example "$ENV_FILE"
     fi
+    # Sanitize replacement string for sed (\ & / escaping)
+    local escaped_val
+    escaped_val=$(printf '%s\n' "$val" | sed -e 's/[\/&]/\\&/g')
     if grep -q "^${key}=" "$ENV_FILE"; then
-        sed -i "s|^${key}=.*|${key}=${val}|" "$ENV_FILE"
+        sed -i "s|^${key}=.*|${key}=${escaped_val}|" "$ENV_FILE"
     else
         echo "${key}=${val}" >> "$ENV_FILE"
     fi
@@ -389,7 +392,9 @@ run_permissions_check() {
         echo -e "${GREEN}  ✓ Workspace permissions OK${NC}"
     fi
 
-    if [ -n "$WAYLAND_DISPLAY" ] || [ -e "/run/user/$UID/wayland-0" ]; then
+    local current_uid
+    current_uid="${UID:-$(id -u)}"
+    if [ -n "$WAYLAND_DISPLAY" ] || [ -e "/run/user/${current_uid}/wayland-0" ]; then
         echo -e "${GREEN}  ✓ Wayland Display detected — Weston & XWayland forwarding active!${NC}"
     fi
 
