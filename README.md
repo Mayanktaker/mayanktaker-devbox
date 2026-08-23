@@ -1,6 +1,6 @@
 # 🟢 Mayanktaker Devbox
 
-> **Skeptic-audited, production-grade Docker sandbox** for running 20+ AI coding agents, full-stack development tools, and mobile development (Flutter/Android) — all safely isolated from your host machine. Includes an **Interactive Setup Wizard** to enable or disable any component on demand!
+> **Skeptic-audited, production-grade Docker sandbox** for running 20+ AI coding agents, full-stack development tools, and mobile development (Flutter/Android) — all safely isolated from your host machine. Includes an **Interactive Setup Wizard** to customize stack versions (Node, PHP, Java, DB) or enable/disable components on demand with **Recommended Defaults pre-selected**!
 
 **© [Mayanktaker Computers & Web Development](https://mayanktaker.com)**
 
@@ -12,27 +12,32 @@ After a [real incident on r/kilocode](https://www.reddit.com/r/kilocode/) where 
 
 - **Isolate AI agents** in a Docker container so they **cannot touch your host OS**
 - **Persist all your work** (code, extensions, SSH keys, DB data) across container restarts
-- **Customize with ease**: Run `./manage.sh wizard` anytime to install everything or toggle only the modules you need!
+- **Customize with ease**: Run `./manage.sh wizard` anytime to install everything, toggle modules, or switch stack versions!
 
 If an AI goes rogue inside this sandbox, you just `./manage.sh down && ./manage.sh up`. Your host machine stays completely safe.
 
 ---
 
-## 🧙‍♂️ Interactive Setup Wizard
+## 🧙‍♂️ Interactive Setup Wizard & Stack Choice
 
-Run `./manage.sh wizard` anytime to choose what to install/enable:
+Run `./manage.sh wizard` anytime to configure your devbox:
 
-- **🚀 Install All (Full Supercharged Suite)** — Enable everything in one click!
+- **🚀 Install All (Full Supercharged Suite)** — Enable everything with recommended defaults!
+- **⚙️ Stack Runtime Versions** (Customizable with Recommended Defaults pre-selected):
+  - **Node.js**: `Node.js 24 LTS` (**Recommended Default**) vs `Node.js 26 Current`
+  - **PHP**: `PHP 8.5` (**Recommended Default**) vs `PHP 8.4`
+  - **Java**: `Java 21 JDK` (**Recommended Default**) vs `Java 17 JDK`
+  - **Database Engine**: `MySQL 8.4 LTS` (**Recommended Default**) vs `MariaDB 11.4 LTS`
 - **🎛️ Custom Selection** — Interactively toggle:
   - [x] **AI Agent CLIs** (Claude, Kilo, Gemini, Antigravity, Devin, Aider, etc.)
   - [x] **Mobile Development** (Flutter SDK, Dart, Android SDK API 35)
   - [x] **Browser Testing & Automation** (Chromium, Playwright)
-  - [x] **PHP 8.5 & Composer Ecosystem**
-  - [x] **MySQL 8.4 Database Container + phpMyAdmin**
+  - [x] **PHP & Composer Ecosystem**
+  - [x] **Relational Database Container + phpMyAdmin**
   - [x] **Redis 8 Cache Container + Redis Commander**
   - [x] **Firebase CLI & Local Emulator Suite**
   - [x] **Developer Productivity TUI Tools** (lazygit, lazydocker, bat, eza, fd, ripgrep)
-- **⚡ Minimal Suite** — Ultra lightweight (VS Code Web + Node 24 + SQLite)
+- **🔑 API Keys Configuration Helper** — Easily set API keys for OpenAI, Anthropic, Gemini, OpenRouter, Kilo, OpenCode, Devin, Kimi, Cursor, DeepSeek, Mistral.
 
 ---
 
@@ -43,7 +48,7 @@ Run `./manage.sh wizard` anytime to choose what to install/enable:
 git clone https://github.com/Mayanktaker/mayanktaker-devbox.git
 cd mayanktaker-devbox
 
-# 2. Run the Interactive Setup Wizard to select components
+# 2. Run the Interactive Setup Wizard to select components & API keys
 ./manage.sh wizard
 
 # 3. Start Devbox web services
@@ -69,18 +74,19 @@ cd mayanktaker-devbox
 
 ## 🧰 What's Included
 
-### Base OS & Runtimes
+### Base OS & Runtimes (Configurable Defaults)
 
-| Component | Version | Notes |
-| :--- | :--- | :--- |
-| **Ubuntu** | **26.04 LTS** "Resolute Raccoon" | Latest LTS (April 2026) |
-| **Node.js** | **24 LTS** | Active LTS (Aug 2026) |
-| **PHP** | **8.5** | Latest stable (8.5.9) |
-| **Python** | **3.12+** | System Python |
-| **Java** | **21 JDK** | LTS (for Firebase Emulators, Android/Gradle) |
-| **Bun** | Latest | Fast JS runtime & package manager |
-| **Flutter** | **Stable** | Full SDK with Dart |
-| **Android SDK** | **API 35** | cmdline-tools, platform-tools, build-tools 35 |
+| Component | Recommended Default | Alternative Choice | Notes |
+| :--- | :--- | :--- | :--- |
+| **Ubuntu** | **26.04 LTS** "Resolute Raccoon" | — | Latest LTS (April 2026) |
+| **Node.js** | **24 LTS** ⭐ | Node 26 Current | Active LTS (Aug 2026) |
+| **PHP** | **8.5** ⭐ | PHP 8.4 | Latest stable (8.5.9) |
+| **Java** | **21 JDK** ⭐ | Java 17 JDK | Current LTS |
+| **Database** | **MySQL 8.4 LTS** ⭐ | MariaDB 11.4 LTS | Relational DB |
+| **Redis** | **Redis 8 Alpine** ⭐ | — | In-memory cache |
+| **Bun** | **Latest** | — | Fast JS runtime & package manager |
+| **Flutter** | **Stable** | — | Full SDK with Dart |
+| **Android SDK** | **API 35** | — | cmdline-tools, platform-tools, build-tools 35 |
 
 ### 🤖 AI Coding Agent CLIs (20+)
 
@@ -109,25 +115,9 @@ cd mayanktaker-devbox
 | :--- | :--- | :--- |
 | **VS Code Web** | `http://localhost:8085` | Full VS Code in browser with persistent extensions |
 | **noVNC GUI** | `http://localhost:6080` | View desktop/Electron apps in browser |
-| **phpMyAdmin** | `http://localhost:8086` | Visual MySQL database management |
+| **phpMyAdmin** | `http://localhost:8086` | Visual MySQL / MariaDB database management |
 | **Redis Commander** | `http://localhost:8087` | Visual Redis cache management |
 | **Firebase UI** | `http://localhost:4000` | Firebase Local Emulator Suite |
-
-### 🗄️ Databases & Cache
-
-| Service | Image | Port |
-| :--- | :--- | :--- |
-| **MySQL** | `mysql:8.4` (LTS) | `3306` |
-| **Redis** | `redis:8-alpine` | `6379` |
-| **SQLite3** | Built-in | N/A |
-
-### 🧪 Browser Testing & Automation
-
-| Tool | Purpose |
-| :--- | :--- |
-| **Chromium** | Headless browser for testing |
-| **Playwright** | Browser automation framework (Chromium pre-installed) |
-| **Xvfb + x11vnc** | Virtual X11 display for GUI apps |
 
 ---
 
@@ -144,7 +134,7 @@ cd mayanktaker-devbox
 | npm/pnpm/Bun cache | `npm_cache` | Package download cache |
 | Python/pip/UV cache | `pip_cache` | Package download cache |
 | Composer cache | `composer_cache` | PHP package cache |
-| MySQL database | `mysql_data` | All database tables & records |
+| MySQL / MariaDB database | `mysql_data` | All database tables & records |
 | Redis cache | `redis_data` | AOF persistent cache data |
 | Android/Gradle cache | `android_cache` | SDK downloads, Gradle builds |
 
@@ -154,6 +144,7 @@ cd mayanktaker-devbox
 
 ```bash
 ./manage.sh wizard         # Run Interactive Customization Wizard
+./manage.sh keys           # View or configure API keys (.env)
 ./manage.sh build          # Build the Docker image with current settings
 ./manage.sh up             # Start all enabled services
 ./manage.sh down           # Stop all services (data persisted)
@@ -165,8 +156,8 @@ cd mayanktaker-devbox
 ./manage.sh pma            # Show phpMyAdmin URL
 ./manage.sh redis-ui       # Show Redis Commander URL
 ./manage.sh firebase       # Show Firebase Emulator UI URL
-./manage.sh db             # Open MySQL CLI
-./manage.sh redis          # Open Redis CLI
+./manage.sh db             # Open Database CLI terminal
+./manage.sh redis          # Open Redis CLI terminal
 ./manage.sh backup         # Database dump to ./backups/
 ./manage.sh auto-backup    # Setup daily 2:00 AM cron backup
 ./manage.sh health         # Check service healthchecks
@@ -175,34 +166,6 @@ cd mayanktaker-devbox
 ./manage.sh logs           # Tail container logs
 ./manage.sh flutter-doctor # Run Flutter diagnostics
 ```
-
----
-
-## 🔑 Environment Variables
-
-Copy `.env.example` to `.env` and fill in your API keys:
-
-```bash
-cp .env.example .env
-```
-
-| Variable | Required? | Purpose |
-| :--- | :--- | :--- |
-| `OPENAI_API_KEY` | Optional | For Codex CLI, GPT models |
-| `ANTHROPIC_API_KEY` | Optional | For Claude Code |
-| `GEMINI_API_KEY` | Optional | For Gemini CLI, Antigravity |
-| `DEVIN_API_KEY` | Optional | For Devin CLI |
-| `KIMI_API_KEY` | Optional | For Kimi Code |
-
----
-
-## 🛡️ Security Features
-
-- **Non-root user**: Container runs as `agent` (UID 1000), not root
-- **no-new-privileges**: Prevents privilege escalation attacks
-- **Healthchecks**: MySQL, Redis, and code-server monitored automatically
-- **Log rotation**: JSON file logging with 50MB rotation (prevents disk fill)
-- **Host isolation**: If an AI agent runs `rm -rf /`, only the container is affected
 
 ---
 

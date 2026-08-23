@@ -1,14 +1,14 @@
 # © Mayanktaker Computers & Web Development | https://mayanktaker.com
 # Ultimate Multi-Agent Sandbox Dockerfile (Ubuntu 26.04 LTS "Resolute Raccoon")
-# Skeptic-audited & Modular: Supports custom build args via setup wizard
-# Stack: Node 24 LTS, PHP 8.5, Python 3, Bun, Java 21, Flutter/Dart, Android SDK,
-#        Chromium, Playwright, Redis CLI, Prisma, Drizzle, Firebase CLI,
-#        Claude Code, Kilo, Codex, Cursor, Aider, Devin, Gemini CLI, Antigravity CLI,
-#        CommandCode, OpenChamber, Pi, Hermes, Paseo, Zcode, T3code, DeepSeek Harness
+# Skeptic-audited & Fully Customizable Stack: Node, PHP, Java, AI Agents, Flutter, Playwright
+# Recommended Defaults: Node 24 LTS, PHP 8.5, Java 21 JDK, MySQL 8.4 LTS, Redis 8 Alpine
 
 FROM ubuntu:26.04 AS base
 
-# Modular Feature Build Arguments (default: true)
+# Modular Feature & Stack Version Build Arguments (with Recommended Defaults)
+ARG NODE_VERSION=24
+ARG PHP_VERSION=8.5
+ARG JAVA_VERSION=21
 ARG INSTALL_AI_AGENTS=true
 ARG INSTALL_FLUTTER_ANDROID=true
 ARG INSTALL_PLAYWRIGHT=true
@@ -26,7 +26,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers \
     PATH="/home/agent/.local/bin:/home/agent/.bun/bin:/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:${PATH}"
 
-# ── Layer 1: Core Ubuntu system packages, build tools, terminal productivity ──
+# ── Layer 1: Core Ubuntu system packages, build tools, Java & terminal productivity ──
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     wget \
@@ -43,7 +43,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     default-mysql-client \
     redis-tools \
     software-properties-common \
-    openjdk-21-jdk-headless \
+    openjdk-${JAVA_VERSION}-jdk-headless \
     tmux \
     fzf \
     jq \
@@ -97,18 +97,18 @@ RUN mkdir -p /etc/apt/keyrings && \
     apt-get update && apt-get install -y gh && \
     rm -rf /var/lib/apt/lists/*
 
-# ── Layer 3: Node.js 24 LTS (Active LTS as of Aug 2026) ──
+# ── Layer 3: Node.js (Configurable: Node 24 LTS default) ──
 RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
-    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_24.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_VERSION}.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
     apt-get update && apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-# ── Layer 4: PHP 8.5 (Conditional on INSTALL_PHP) ──
+# ── Layer 4: PHP (Configurable: PHP 8.5 default, conditional on INSTALL_PHP) ──
 RUN if [ "$INSTALL_PHP" = "true" ]; then \
       add-apt-repository -y ppa:ondrej/php && \
       apt-get update && apt-get install -y --no-install-recommends \
-      php8.5-cli php8.5-mysql php8.5-sqlite3 php8.5-redis php8.5-curl php8.5-mbstring \
-      php8.5-xml php8.5-zip php8.5-intl php8.5-gd php8.5-bcmath php8.5-xdebug composer && \
+      php${PHP_VERSION}-cli php${PHP_VERSION}-mysql php${PHP_VERSION}-sqlite3 php${PHP_VERSION}-redis php${PHP_VERSION}-curl php${PHP_VERSION}-mbstring \
+      php${PHP_VERSION}-xml php${PHP_VERSION}-zip php${PHP_VERSION}-intl php${PHP_VERSION}-gd php${PHP_VERSION}-bcmath php${PHP_VERSION}-xdebug composer && \
       rm -rf /var/lib/apt/lists/* ; \
     fi
 

@@ -10,6 +10,9 @@ services:
       context: .
       dockerfile: docker/Dockerfile.devbox
       args:
+        NODE_VERSION: ${NODE_VERSION:-24}
+        PHP_VERSION: ${PHP_VERSION:-8.5}
+        JAVA_VERSION: ${JAVA_VERSION:-21}
         INSTALL_AI_AGENTS: ${ENABLE_AI_AGENTS:-true}
         INSTALL_FLUTTER_ANDROID: ${ENABLE_FLUTTER_ANDROID:-true}
         INSTALL_PLAYWRIGHT: ${ENABLE_PLAYWRIGHT:-true}

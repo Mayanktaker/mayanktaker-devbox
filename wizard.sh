@@ -37,6 +37,9 @@ load_config() {
     ENABLE_DEV_TOOLS=${ENABLE_DEV_TOOLS:-true}
     DB_ENGINE=${DB_ENGINE:-mysql}
     DB_ENGINE_IMAGE=${DB_ENGINE_IMAGE:-mysql:8.4}
+    NODE_VERSION=${NODE_VERSION:-24}
+    PHP_VERSION=${PHP_VERSION:-8.5}
+    JAVA_VERSION=${JAVA_VERSION:-21}
 
     if [ -f "$CONF_FILE" ]; then
         source "$CONF_FILE"
@@ -72,6 +75,9 @@ ENABLE_FIREBASE=$ENABLE_FIREBASE
 ENABLE_DEV_TOOLS=$ENABLE_DEV_TOOLS
 DB_ENGINE=$DB_ENGINE
 DB_ENGINE_IMAGE=$DB_ENGINE_IMAGE
+NODE_VERSION=$NODE_VERSION
+PHP_VERSION=$PHP_VERSION
+JAVA_VERSION=$JAVA_VERSION
 EOF
 
     set_env_var "ENABLE_AI_AGENTS" "$ENABLE_AI_AGENTS"
@@ -84,6 +90,9 @@ EOF
     set_env_var "ENABLE_DEV_TOOLS" "$ENABLE_DEV_TOOLS"
     set_env_var "DB_ENGINE" "$DB_ENGINE"
     set_env_var "DB_ENGINE_IMAGE" "$DB_ENGINE_IMAGE"
+    set_env_var "NODE_VERSION" "$NODE_VERSION"
+    set_env_var "PHP_VERSION" "$PHP_VERSION"
+    set_env_var "JAVA_VERSION" "$JAVA_VERSION"
 
     # Set Docker Compose profiles
     PROFILES="default"
@@ -118,6 +127,47 @@ select_db_engine() {
     esac
     save_config
     sleep 1
+}
+
+# Interactive Stack Version Customizer
+select_stack_versions() {
+    show_banner
+    echo -e "${BOLD}⚙️ Customize Stack Runtime Versions (Node, PHP, Java)${NC}"
+    echo -e "${CYAN}Recommended default versions are pre-selected.${NC}"
+    echo ""
+
+    echo -e "${BOLD}1. Select Node.js Version:${NC}"
+    echo -e "   [1] Node.js 24 LTS (${GREEN}Recommended Default - Active LTS${NC})"
+    echo -e "   [2] Node.js 26 Current (Latest features)"
+    read -p "Select Node.js version [1-2, Enter=24]: " node_choice
+    case "$node_choice" in
+        2) NODE_VERSION="26" ;;
+        *) NODE_VERSION="24" ;;
+    esac
+
+    echo ""
+    echo -e "${BOLD}2. Select PHP Version:${NC}"
+    echo -e "   [1] PHP 8.5 (${GREEN}Recommended Default - Latest Stable${NC})"
+    echo -e "   [2] PHP 8.4 (Active Support)"
+    read -p "Select PHP version [1-2, Enter=8.5]: " php_choice
+    case "$php_choice" in
+        2) PHP_VERSION="8.4" ;;
+        *) PHP_VERSION="8.5" ;;
+    esac
+
+    echo ""
+    echo -e "${BOLD}3. Select Java JDK Version:${NC}"
+    echo -e "   [1] Java 21 JDK (${GREEN}Recommended Default - Current LTS${NC})"
+    echo -e "   [2] Java 17 JDK (Legacy LTS)"
+    read -p "Select Java version [1-2, Enter=21]: " java_choice
+    case "$java_choice" in
+        2) JAVA_VERSION="17" ;;
+        *) JAVA_VERSION="21" ;;
+    esac
+
+    save_config
+    echo -e "${GREEN}[✓] Stack versions updated: Node.js $NODE_VERSION, PHP $PHP_VERSION, Java $JAVA_VERSION${NC}"
+    sleep 2
 }
 
 # Interactive API Keys Config Helper
@@ -173,7 +223,7 @@ show_summary() {
     echo -e "${CYAN}------------------------------------------------------------------------${NC}"
     echo -e "${BOLD}               CURRENT DEVBOX COMPONENT CONFIGURATION                   ${NC}"
     echo -e "${CYAN}------------------------------------------------------------------------${NC}"
-    printf "  %-35s | %-20s\n" "Component / Module" "Status / Selection"
+    printf "  %-35s | %-20s\n" "Component / Stack Choice" "Status / Selection"
     echo -e "${CYAN}------------------------------------------------------------------------${NC}"
     
     print_row() {
@@ -189,7 +239,12 @@ show_summary() {
     print_row "🤖 20+ AI Agent CLIs (Claude, Kilo, etc)" "$ENABLE_AI_AGENTS"
     print_row "📱 Mobile Dev (Flutter + Android SDK)" "$ENABLE_FLUTTER_ANDROID"
     print_row "🎭 Browser Testing (Chromium + Playwright)" "$ENABLE_PLAYWRIGHT"
-    print_row "🐘 PHP 8.5 & Composer Ecosystem" "$ENABLE_PHP"
+    print_row "🐘 PHP & Composer Ecosystem" "$ENABLE_PHP"
+    if [ "$ENABLE_PHP" = "true" ]; then
+        printf "  %-35s | ${CYAN}%-20s${NC}\n" "   └─ PHP Version" "[PHP $PHP_VERSION]"
+    fi
+    printf "  %-35s | ${CYAN}%-20s${NC}\n" "🟢 Node.js Runtime Version" "[Node.js $NODE_VERSION LTS]"
+    printf "  %-35s | ${CYAN}%-20s${NC}\n" "☕ Java JDK Version" "[Java $JAVA_VERSION JDK]"
     print_row "🐬 Relational Database Container" "$ENABLE_MYSQL"
     if [ "$ENABLE_MYSQL" = "true" ]; then
         printf "  %-35s | ${CYAN}%-20s${NC}\n" "   └─ Engine Choice" "[$DB_ENGINE_IMAGE]"
@@ -213,8 +268,11 @@ install_all() {
     ENABLE_DEV_TOOLS=true
     DB_ENGINE="mysql"
     DB_ENGINE_IMAGE="mysql:8.4"
+    NODE_VERSION="24"
+    PHP_VERSION="8.5"
+    JAVA_VERSION="21"
     save_config
-    echo -e "${GREEN}${BOLD}[🚀] FULL SUPERCHARGED SUITE ENABLED! (MySQL 8.4 LTS default).${NC}"
+    echo -e "${GREEN}${BOLD}[🚀] FULL SUPERCHARGED SUITE ENABLED! (Recommended defaults active).${NC}"
 }
 
 # Minimal Preset
@@ -229,6 +287,9 @@ install_minimal() {
     ENABLE_DEV_TOOLS=true
     DB_ENGINE="mysql"
     DB_ENGINE_IMAGE="mysql:8.4"
+    NODE_VERSION="24"
+    PHP_VERSION="8.5"
+    JAVA_VERSION="21"
     save_config
     echo -e "${YELLOW}[⚡] MINIMAL CORE SUITE ENABLED! (AI Agents + Node 24 + VS Code Web).${NC}"
 }
@@ -241,7 +302,7 @@ custom_whiptail_menu() {
         "AI_AGENTS" "20+ AI Agent CLIs (Claude, Kilo, Gemini, Devin, etc)" $([ "$ENABLE_AI_AGENTS" = "true" ] && echo "ON" || echo "OFF") \
         "FLUTTER_ANDROID" "Flutter SDK, Dart & Android SDK API 35" $([ "$ENABLE_FLUTTER_ANDROID" = "true" ] && echo "ON" || echo "OFF") \
         "PLAYWRIGHT" "Chromium & Playwright Browser Automation" $([ "$ENABLE_PLAYWRIGHT" = "true" ] && echo "ON" || echo "OFF") \
-        "PHP" "PHP 8.5 & Composer Ecosystem" $([ "$ENABLE_PHP" = "true" ] && echo "ON" || echo "OFF") \
+        "PHP" "PHP & Composer Ecosystem" $([ "$ENABLE_PHP" = "true" ] && echo "ON" || echo "OFF") \
         "MYSQL" "Relational Database Container + phpMyAdmin" $([ "$ENABLE_MYSQL" = "true" ] && echo "ON" || echo "OFF") \
         "REDIS" "Redis 8 Cache Container + Redis Commander" $([ "$ENABLE_REDIS" = "true" ] && echo "ON" || echo "OFF") \
         "FIREBASE" "Firebase CLI & Local Emulator Suite" $([ "$ENABLE_FIREBASE" = "true" ] && echo "ON" || echo "OFF") \
@@ -288,20 +349,21 @@ custom_cli_menu() {
     while true; do
         show_banner
         show_summary
-        echo -e "${BOLD}Select a component number to toggle ON/OFF, 'D' to change DB Engine, or 'S' to Save & Exit:${NC}"
+        echo -e "${BOLD}Select a component to toggle, 'V' for Stack Versions, 'D' for DB Engine, or 'S' to Save & Exit:${NC}"
         echo "  [1] Toggle AI Agent CLIs"
         echo "  [2] Toggle Mobile Dev (Flutter & Android SDK)"
         echo "  [3] Toggle Browser Testing (Chromium & Playwright)"
-        echo "  [4] Toggle PHP 8.5 & Composer"
+        echo "  [4] Toggle PHP & Composer"
         echo "  [5] Toggle Relational Database Container + phpMyAdmin"
         echo "  [6] Toggle Redis 8 Cache + Redis Commander"
         echo "  [7] Toggle Firebase CLI & Emulators"
         echo "  [8] Toggle Dev TUI Tools (lazygit, bat, etc)"
+        echo "  [V] Customize Stack Runtime Versions (Node, PHP, Java)"
         echo "  [D] Change Database Engine (MySQL 8.4 vs MariaDB 11.4)"
         echo "  [A] Enable ALL Components"
         echo "  [S] Save & Finish"
         echo ""
-        read -p "Enter choice [1-8, D, A, S]: " input_choice
+        read -p "Enter choice [1-8, V, D, A, S]: " input_choice
 
         case "$input_choice" in
             1) toggle_var "ENABLE_AI_AGENTS" ;;
@@ -312,6 +374,7 @@ custom_cli_menu() {
             6) toggle_var "ENABLE_REDIS" ;;
             7) toggle_var "ENABLE_FIREBASE" ;;
             8) toggle_var "ENABLE_DEV_TOOLS" ;;
+            [vV]) select_stack_versions ;;
             [dD]) select_db_engine ;;
             [aA]) install_all ; break ;;
             [sS]) save_config ; break ;;
@@ -330,11 +393,12 @@ run_wizard() {
     echo -e "  ${GREEN}${BOLD}[1] 🚀 INSTALL ALL (Full Supercharged Suite - Recommended Default)${NC}"
     echo -e "  ${CYAN}[2] 🎛️  Custom Selection (Toggle components ON/OFF)${NC}"
     echo -e "  ${YELLOW}[3] ⚡ Minimal Suite (Core AI Agents + Node 24 + VS Code Web)${NC}"
-    echo -e "  ${CYAN}[4] 🗄️ Select DB Engine (Current: $DB_ENGINE_IMAGE)${NC}"
-    echo -e "  ${CYAN}[5] 🔑 Configure API Keys (.env helper)${NC}"
-    echo -e "  [6] 🚪 Exit without changes"
+    echo -e "  ${CYAN}[4] ⚙️ Customize Stack Versions (Node $NODE_VERSION, PHP $PHP_VERSION, Java $JAVA_VERSION)${NC}"
+    echo -e "  ${CYAN}[5] 🗄️ Select DB Engine (Current: $DB_ENGINE_IMAGE)${NC}"
+    echo -e "  ${CYAN}[6] 🔑 Configure API Keys (.env helper)${NC}"
+    echo -e "  [7] 🚪 Exit without changes"
     echo ""
-    read -p "Select option [1-6]: " main_choice
+    read -p "Select option [1-7]: " main_choice
 
     case "$main_choice" in
         1)
@@ -351,16 +415,21 @@ run_wizard() {
             install_minimal
             ;;
         4)
-            select_db_engine
+            select_stack_versions
             run_wizard
             return
             ;;
         5)
-            configure_keys
+            select_db_engine
             run_wizard
             return
             ;;
         6)
+            configure_keys
+            run_wizard
+            return
+            ;;
+        7)
             echo -e "${YELLOW}Exited without changing configuration.${NC}"
             exit 0
             ;;
