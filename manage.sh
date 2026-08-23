@@ -28,10 +28,42 @@ check_env() {
     fi
 }
 
+# Host Permissions Pre-Check & Auto-Fix Helper
+check_permissions() {
+    echo -e "${CYAN}[+] Running Host Permissions & Docker Pre-Check...${NC}"
+    
+    # 1. Ensure required host folders exist
+    mkdir -p workspace devbox_config backups
+    chmod -R 775 workspace devbox_config backups 2>/dev/null || true
+    
+    # 2. Check if current user is in docker group
+    if command -v docker >/dev/null 2>&1; then
+        if ! groups "$USER" 2>/dev/null | grep -q "\bdocker\b"; then
+            echo -e "${YELLOW}[!] User '$USER' is not in the 'docker' group.${NC}"
+            echo -e "${CYAN}    To fix: sudo usermod -aG docker $USER${NC}"
+        else
+            echo -e "${GREEN}  ✓ Docker group membership OK${NC}"
+        fi
+    fi
+
+    # 3. Check workspace directory ownership & permissions
+    if [ ! -w "workspace" ]; then
+        echo -e "${YELLOW}[!] Host 'workspace' directory is not writable by $USER. Fixing permissions...${NC}"
+        chmod -R 775 workspace devbox_config backups 2>/dev/null || true
+    else
+        echo -e "${GREEN}  ✓ Host workspace directory permissions OK${NC}"
+    fi
+}
+
 # Main command router
 case "$1" in
     wizard|setup|config)
         bash ./wizard.sh
+        ;;
+    fix-perms|perms)
+        show_banner
+        check_permissions
+        echo -e "${GREEN}[✓] Host permissions pre-check complete!${NC}"
         ;;
     keys)
         show_banner
@@ -71,12 +103,14 @@ case "$1" in
     build)
         show_banner
         check_env
+        check_permissions
         echo -e "${GREEN}[+] Building Devbox Docker image (Ubuntu 26.04)...${NC}"
         docker compose build devbox
         ;;
     up)
         show_banner
         check_env
+        check_permissions
         echo -e "${GREEN}[+] Starting Devbox services (25GB RAM, 10 CPUs)...${NC}"
         docker compose up -d
         echo -e "${GREEN}[✓] All Devbox Web Services Running!${NC}"
@@ -224,6 +258,7 @@ case "$1" in
         echo ""
         echo "Commands:"
         echo "  wizard / setup Run Interactive Customization Wizard"
+        echo "  fix-perms      Run Host Permissions & Docker Group Pre-Check"
         echo "  keys           View or configure API keys (.env)"
         echo "  build          Build the Devbox Docker image"
         echo "  up             Start all enabled Devbox services"

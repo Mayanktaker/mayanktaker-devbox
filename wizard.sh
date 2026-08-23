@@ -335,6 +335,39 @@ configure_keys() {
     sleep 2
 }
 
+# Host Permissions Pre-Check Helper
+run_permissions_check() {
+    show_banner
+    echo -e "${BOLD}🔒 Host Permissions & Docker Group Pre-Check${NC}"
+    echo ""
+    mkdir -p workspace devbox_config backups
+    chmod -R 775 workspace devbox_config backups 2>/dev/null || true
+    
+    if command -v docker >/dev/null 2>&1; then
+        if ! groups "$USER" 2>/dev/null | grep -q "\bdocker\b"; then
+            echo -e "${YELLOW}[!] User '$USER' is not in the 'docker' group.${NC}"
+            read -p "Would you like to add '$USER' to the docker group? (Y/n): " add_doc
+            case "$add_doc" in
+                [nN]*) echo -e "${YELLOW}Skipped adding to docker group.${NC}" ;;
+                *) sudo usermod -aG docker "$USER" && echo -e "${GREEN}[✓] Added $USER to docker group!${NC}" ;;
+            esac
+        else
+            echo -e "${GREEN}  ✓ Docker group membership OK${NC}"
+        fi
+    fi
+
+    if [ ! -w "workspace" ]; then
+        echo -e "${YELLOW}[!] Workspace is not writable. Fixing...${NC}"
+        chmod -R 775 workspace devbox_config backups 2>/dev/null || true
+    else
+        echo -e "${GREEN}  ✓ Workspace permissions OK${NC}"
+    fi
+
+    echo ""
+    echo -e "${GREEN}[✓] Permissions check complete!${NC}"
+    sleep 2
+}
+
 # Summary table view
 show_summary() {
     echo -e "${CYAN}------------------------------------------------------------------------${NC}"
@@ -592,9 +625,10 @@ run_wizard() {
     echo -e "  ${CYAN}[5] 🗄️ Database & Cache Options (MySQL/MariaDB, PostgreSQL, MongoDB, Redis/KeyDB)${NC}"
     echo -e "  ${CYAN}[6] 💻 Shells & Editors (Zsh, Fish, Neovim/Vim, Micro, Helix)${NC}"
     echo -e "  ${CYAN}[7] 🔑 Configure API Keys (.env helper)${NC}"
-    echo -e "  [8] 🚪 Exit without changes"
+    echo -e "  ${CYAN}[8] 🔒 Run Host Permissions & Docker Group Pre-Check${NC}"
+    echo -e "  [9] 🚪 Exit without changes"
     echo ""
-    read -p "Select option [1-8]: " main_choice
+    read -p "Select option [1-9]: " main_choice
 
     case "$main_choice" in
         1)
@@ -632,6 +666,11 @@ run_wizard() {
             return
             ;;
         8)
+            run_permissions_check
+            run_wizard
+            return
+            ;;
+        9)
             echo -e "${YELLOW}Exited without changing configuration.${NC}"
             exit 0
             ;;

@@ -1,6 +1,6 @@
 # 🟢 Mayanktaker Devbox
 
-> **Skeptic-audited, production-grade Docker sandbox** for running 20+ AI coding agents, full-stack development tools, and mobile development (Flutter/Android/React Native Expo/Fastlane) — all safely isolated from your host machine. Includes an **Interactive Setup Wizard** to customize stack runtimes (Node, PHP, Java, Rust, Go, Bun, uv, Deno, C/C++), shell choices (Bash, Zsh, Fish), terminal editors (Neovim/Vim, Micro, Helix), and database containers (MySQL, MariaDB, Postgres, Mongo, Redis, KeyDB)!
+> **Skeptic-audited, production-grade Docker sandbox** for running 20+ AI coding agents, full-stack development tools, and mobile development (Flutter/Android/React Native Expo/Fastlane) — all safely isolated from your host machine. Includes an **Interactive Setup Wizard** to customize stack runtimes (Node, PHP, Java, Rust, Go, Bun, uv, Deno, C/C++), shell choices (Bash, Zsh, Fish), terminal editors (Neovim/Vim, Micro, Helix), and database containers (MySQL, MariaDB, Postgres, Mongo, Redis, KeyDB) with a **Host Permissions Pre-Check & Auto-Fix System**!
 
 **© [Mayanktaker Computers & Web Development](https://mayanktaker.com)**
 
@@ -24,6 +24,18 @@ Special thanks to Reddit user **[u/kaas_is_leven](https://www.reddit.com/r/kiloc
 
 ---
 
+## 🔒 Permissions & Docker Group Pre-Check System
+
+To ensure users never run into `Permission denied` errors or Docker daemon access issues on Linux, Mayanktaker Devbox includes an automated pre-check:
+
+- **Automated Check**: `./manage.sh build` and `./manage.sh up` automatically run host directory & Docker group pre-checks before executing.
+- **Manual Pre-Check**: Run `./manage.sh fix-perms` anytime or select **Option `[8] 🔒 Run Host Permissions Pre-Check`** in the setup wizard.
+- **Auto-Fixes**:
+  - Automatically verifies & sets `chmod 775` on host `./workspace`, `./devbox_config`, and `./backups` directories.
+  - Automatically prompts & adds your Linux host user to the `docker` group (`sudo usermod -aG docker $USER`).
+
+---
+
 ## 🧙‍♂️ Interactive Setup Wizard & Stack Choice
 
 Run `./manage.sh wizard` anytime to configure your devbox:
@@ -33,12 +45,12 @@ Run `./manage.sh wizard` anytime to configure your devbox:
 - **🎛️ Custom Component Toggles**:
   - [x] **AI Agent CLIs** (Claude, Kilo, Gemini, Antigravity, Devin, Aider, etc.)
   - [x] **Mobile Development (Flutter SDK, Dart, Android SDK API 35)**
-  - [x] **React Native Expo CLI & eas-cli (Cloud iOS/Android Builds)** ⭐
-  - [x] **Fastlane Mobile Release Automation** ⭐
-  - [x] **Kotlin Compiler (`kotlinc`)** ⭐
-  - [x] **Watchman React Native Hot Reload** ⭐
+  - [x] **React Native Expo CLI & eas-cli (Cloud iOS/Android Builds)**
+  - [x] **Fastlane Mobile Release Automation**
+  - [x] **Kotlin Compiler (`kotlinc`)**
+  - [x] **Watchman React Native Hot Reload**
   - [x] **Browser Testing & Automation (Chromium, Playwright)**
-  - [x] **Lighthouse Core Web Vitals & PWA Audit CLI** ⭐
+  - [x] **Lighthouse Core Web Vitals & PWA Audit CLI**
   - [x] **PHP & Composer Ecosystem**
   - [x] **Bun JS/TS Runtime & Fast Package Manager**
   - [x] **uv Python Package Manager & Resolver**
@@ -148,39 +160,30 @@ cd mayanktaker-devbox
 | **T3code** | `t3code` | T3 Nightly coding CLI |
 | **DeepSeek Harness** | `lm-eval` + `transformers` | Model evaluation framework |
 
-### 🌐 Web Dashboards & Services
-
-| Service | URL | Purpose |
-| :--- | :--- | :--- |
-| **VS Code Web** | `http://localhost:8085` | Full VS Code in browser with persistent extensions |
-| **noVNC GUI** | `http://localhost:6080` | View desktop/Electron apps in browser |
-| **phpMyAdmin** | `http://localhost:8086` | Visual MySQL / MariaDB database management |
-| **Redis Commander** | `http://localhost:8087` | Visual Redis / KeyDB cache management |
-| **pgAdmin 4 UI** | `http://localhost:8088` | Visual PostgreSQL database management |
-| **Mongo Express UI** | `http://localhost:8089` | Visual MongoDB database management |
-| **Firebase UI** | `http://localhost:4000` | Firebase Local Emulator Suite |
-
 ---
 
-## 🔒 Persistence — Your Data Survives Container Restarts
+## 🔒 Persistent Directory & Volume Inventory
 
-| What's Persisted | Docker Volume | Purpose |
+All data, settings, extensions, and database records survive container restarts and rebuilds through these persistent mounts:
+
+| Host / Docker Volume | Container Mount Path | Persisted Items |
 | :--- | :--- | :--- |
-| Project source code | `./workspace` (bind mount) | Your repos and code |
-| User home directory | `agent_home` | `.bashrc`, `.zshrc`, dotfiles |
-| SSH keys | `agent_ssh` | GitHub auth, server keys |
-| VS Code settings | `vscode_data` | Keybindings, user settings |
-| VS Code extensions | `vscode_extensions` | All installed extensions |
-| Firebase credentials | `firebase_config` | Firebase CLI login token |
-| npm/pnpm/Bun cache | `npm_cache` | Package download cache |
-| Python/pip/UV cache | `pip_cache` | Package download cache |
-| Composer cache | `composer_cache` | PHP package cache |
-| MySQL / MariaDB database | `mysql_data` | All database tables & records |
-| PostgreSQL database | `postgres_data` | Postgres database storage |
-| pgAdmin settings | `pgadmin_data` | pgAdmin configuration & servers |
-| MongoDB database | `mongo_data` | Mongo database documents |
-| Redis / KeyDB cache | `redis_data` | AOF persistent cache data |
-| Android/Gradle cache | `android_cache` | SDK downloads, Gradle builds |
+| **`./workspace`** (bind mount) | `/workspace` | Project source code & repository files |
+| **`./devbox_config`** (bind mount) | `/home/agent/.kilo` | Agent configurations & profiles |
+| **`agent_home`** (volume) | `/home/agent` | `.bashrc`, `.zshrc`, `.gitconfig`, dotfiles |
+| **`agent_ssh`** (volume) | `/home/agent/.ssh` | SSH keypairs & known_hosts |
+| **`vscode_data`** (volume) | `/home/agent/.config/code-server` | VS Code Web user settings & keybindings |
+| **`vscode_extensions`** (volume) | `/home/agent/.local/share/code-server` | All installed VS Code Web extensions |
+| **`firebase_config`** (volume) | `/home/agent/.config/configstore` | Firebase CLI login token & state |
+| **`npm_cache`** (volume) | `/home/agent/.npm` | Global npm / pnpm / Bun download cache |
+| **`pip_cache`** (volume) | `/home/agent/.cache` | Python pip / UV package download cache |
+| **`composer_cache`** (volume) | `/home/agent/.cache/composer` | PHP Composer package download cache |
+| **`mysql_data`** (volume) | `/var/lib/mysql` | MySQL 8.4 / MariaDB database tables & schemas |
+| **`postgres_data`** (volume) | `/var/lib/postgresql/data` | PostgreSQL 17 database files |
+| **`pgadmin_data`** (volume) | `/var/lib/pgadmin` | pgAdmin 4 user configurations & saved servers |
+| **`mongo_data`** (volume) | `/data/db` | MongoDB 8 document database storage |
+| **`redis_data`** (volume) | `/data` | Redis 8 / KeyDB AOF persistent cache data |
+| **`android_cache`** (volume) | `/home/agent/.android` | Android SDK licenses, AVDs & Gradle build cache |
 
 ---
 
@@ -188,6 +191,7 @@ cd mayanktaker-devbox
 
 ```bash
 ./manage.sh wizard         # Run Interactive Customization Wizard
+./manage.sh fix-perms      # Run Host Permissions & Docker Group Pre-Check
 ./manage.sh keys           # View or configure API keys (.env)
 ./manage.sh build          # Build the Devbox Docker image with current settings
 ./manage.sh up             # Start all enabled services
